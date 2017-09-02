@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <Button
+    android:id="@+id/login"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:text="登陆"
+    android:textSize="20sp"
+    android:background="@drawable/oval"
+    android:layout_marginLeft="22dp"
+    android:layout_marginRight="22dp"
+    android:layout_marginTop="66dp"/>
+
+    <Button
+        android:id="@+id/setWifi"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="智能配置监控器"
+        android:textSize="20sp"
+        android:background="@drawable/oval"
+        android:layout_marginLeft="22dp"
+        android:layout_marginRight="22dp"
+        android:layout_marginTop="22dp"/>
+
+    <Button
+        android:id="@+id/exit_btn"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="退出应用"
+        android:textSize="20sp"
+        android:background="@drawable/oval"
+        android:layout_marginLeft="22dp"
+        android:layout_marginRight="22dp"
+        android:layout_marginTop="44dp"/>
+
+
+</LinearLayout>

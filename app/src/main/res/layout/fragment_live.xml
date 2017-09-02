@@ -1,0 +1,23 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <SurfaceView
+        android:id="@+id/surfaceView"
+
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1" />
+
+    <Button
+        android:id="@+id/play"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="播放"
+        android:textSize="16sp"
+        android:background="@drawable/oval"
+        android:layout_marginLeft="44dp"
+        android:layout_marginRight="44dp" />
+
+</LinearLayout>
