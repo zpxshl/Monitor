@@ -15,7 +15,15 @@ import android.widget.Toast;
 
 import com.example.pxshl.yc_monitior.R;
 import com.example.pxshl.yc_monitior.adapter.WifiAdapter;
+import com.example.pxshl.yc_monitior.util.Data;
 
+import java.io.IOException;
+import java.io.InterruptedIOException;
+import java.io.OutputStream;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.Socket;
 import java.util.List;
 
 
@@ -180,5 +188,44 @@ public class WifiActivity extends AppCompatActivity {
         return config;
     }
 
+
+    public void sendToMonitor(final String msg){
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                OutputStream os;
+                try {
+                    Socket socket = new Socket(Data.MONITOR_WIFI_IP,8890);
+                    os = socket.getOutputStream();
+                    byte[] buffer = (msg + '\n').getBytes();
+                    os.write(buffer);
+                    os.flush();
+
+                    if (isMonitorConnect()){
+
+                    }else {
+
+                    }
+                }
+                catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+    }
+
+    private boolean isMonitorConnect() throws InterruptedException{ //通过判断监控器有没有重新发出wifi
+
+        for (int i = 15 ; i > 0 ;i--){
+            for (ScanResult result : mWifiManager.getScanResults()){
+                if (result.SSID.contains(MonitorWifiName)){
+                    return false;
+                }
+            }
+            Thread.sleep(4000);
+        }
+        return true;
+
+    }
 
 }

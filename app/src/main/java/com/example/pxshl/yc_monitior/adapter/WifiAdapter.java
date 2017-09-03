@@ -14,6 +14,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 import com.example.pxshl.yc_monitior.R;
+import com.example.pxshl.yc_monitior.activity.WifiActivity;
 import com.example.pxshl.yc_monitior.widget.IconTextView;
 
 import java.util.List;
@@ -73,8 +74,8 @@ public class WifiAdapter extends RecyclerView.Adapter {
                     .setPositiveButton("确定", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialogInterface, int i) {
-                         String wifiInfo =  mDataList.get(position).SSID + " " +  editText.getText().toString();
-                            Log.e("wifiInfo",wifiInfo);
+                         String msg=  mDataList.get(position).SSID + " " +  editText.getText().toString();
+                            ((WifiActivity)(mContext)).sendToMonitor(msg);
                         }
                     })
                     .setNegativeButton("取消",null).show();

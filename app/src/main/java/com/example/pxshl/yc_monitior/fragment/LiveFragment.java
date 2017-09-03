@@ -26,6 +26,7 @@ import com.example.pxshl.yc_monitior.net.rtp.SipdroidSocket;
 import com.example.pxshl.yc_monitior.net.tcp.TcpConnect;
 import com.example.pxshl.yc_monitior.net.udp.UdpConnect;
 import com.example.pxshl.yc_monitior.util.Data;
+import com.example.pxshl.yc_monitior.util.Tools;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -91,11 +92,11 @@ public class LiveFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 if (!isRunning){
-                    TcpConnect.send(Data.START_PLAY + "");
+                    TcpConnect.send(Data.START_PLAY + " "  + Data.account + " " + Tools.pwdToMd5(Data.password));
                     TcpConnect.receive(new RequestCallBack() {
                         @Override
                         public void onFinish(String response) {
-
+                            Log.e("play_response",response);
                             if (response.equals("no")){
                                 if (mActivity != null){
                                     mActivity.runOnUiThread(new Runnable() {
@@ -117,7 +118,7 @@ public class LiveFragment extends Fragment {
                                 return;
                             }
 
-                          //  String msg = Data.STOP_PLAY + " " + Data.account;
+
                             UdpConnect.sendUDP("app", port, new SendCallBack() {
                                 @Override
                                 public void onFinish() {
@@ -136,13 +137,14 @@ public class LiveFragment extends Fragment {
 
                         }
                     });
-                    startReceive();
+
                     play.setText("停止");
 
                 }else {
-       //             TcpConnect.send(Data.STOP_PLAY + "");
-                    play.setText("播放");
                     close();
+                    TcpConnect.send(Data.STOP_PLAY + " " + Data.account + " " + Tools.pwdToMd5(Data.password));
+                    play.setText("播放");
+
                 }
             }
         });
@@ -226,6 +228,9 @@ public class LiveFragment extends Fragment {
             boolean hasStartPacket,hasEndPacket,isContinue,isRightGet;
             int lastSequence,nowSequence,frmSize;
 
+            long good_packet = 0;
+            long bad_packet = 0;
+
             while (isRunning)
             {
 
@@ -235,6 +240,9 @@ public class LiveFragment extends Fragment {
                 frmSize = 0;
                 lastSequence = -1;
                 nowSequence = 0;
+
+
+
 
                 while(isContinue){
 
@@ -314,10 +322,16 @@ public class LiveFragment extends Fragment {
                 }
 
                 if( !(hasStartPacket && hasEndPacket && isRightGet))
+                {
+                   bad_packet ++;
                     continue;
+                }
+
 
                 if(frmSize<=0)
                     continue;
+
+                good_packet ++;
 
                 byte[] h254Header={0,0,0,1};
                 byte[] h264Frmbuf = new byte[65536];
@@ -330,6 +344,8 @@ public class LiveFragment extends Fragment {
                 rtp_socket.close();
                 rtp_socket=null;
             }
+
+            Log.e("bad/all",(double)bad_packet / (bad_packet + good_packet) + "");
         }
     }
 
