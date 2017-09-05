@@ -1,7 +1,9 @@
 package com.example.pxshl.yc_monitior.activity;
 
 
+import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
@@ -10,6 +12,7 @@ import android.provider.Settings;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
@@ -17,14 +20,20 @@ import com.example.pxshl.yc_monitior.R;
 import com.example.pxshl.yc_monitior.adapter.WifiAdapter;
 import com.example.pxshl.yc_monitior.util.Data;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.io.OutputStream;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.util.List;
+
+import static android.R.attr.enabled;
 
 
 /**
@@ -34,7 +43,7 @@ import java.util.List;
 public class WifiActivity extends AppCompatActivity {
 
 
-   private static final String MonitorWifiName = "Z9 mini"; //监控器的wifi名
+   private static final String MonitorWifiName = "Pi3-AP"; //监控器的wifi名
     private RecyclerView wifiList;
     private WifiAdapter mAdapter;
     private WifiManager mWifiManager;
@@ -59,6 +68,7 @@ public class WifiActivity extends AppCompatActivity {
 
         mWifiManager.startScan();
         wifiList = (RecyclerView) findViewById(R.id.wifi_list);
+
 
         if (hasMonitorWifi(MonitorWifiName)){
 
@@ -118,7 +128,9 @@ public class WifiActivity extends AppCompatActivity {
 
     private boolean hasMonitorWifi(String SSID){
         //先刷新wifi列表
-        for (ScanResult result : mWifiManager.getScanResults()){
+        List<ScanResult> results = mWifiManager.getScanResults();
+        for (ScanResult result : results){
+            Log.e("SSID",result.SSID);
             if (result.SSID.contains(SSID)){
                 return true;
             }
@@ -193,13 +205,31 @@ public class WifiActivity extends AppCompatActivity {
         new Thread(new Runnable() {
             @Override
             public void run() {
+
+
+
                 OutputStream os;
+                Socket socket = null;
                 try {
-                    Socket socket = new Socket(Data.MONITOR_WIFI_IP,8890);
+                    socket = new Socket(Data.MONITOR_WIFI_IP,8890);
                     os = socket.getOutputStream();
-                    byte[] buffer = (msg + '\n').getBytes();
+                    byte[] buffer = (msg).getBytes();
                     os.write(buffer);
                     os.flush();
+
+
+                /*    BufferedInputStream in = new BufferedInputStream(socket.getInputStream());
+                    StringBuilder sb = new StringBuilder();
+                    byte[] buff = new byte[1024];
+
+                    int len;
+                    while  (  (len = in.read(buff)) != -1 ) {
+                        for (int i = 0; i < len ;i++) {
+                            sb.append((char) buff[i]);
+                        }
+                        Log.e("onFinish",sb.toString());
+                    }*/
+
 
                     if (isMonitorConnect()){
 
@@ -209,6 +239,14 @@ public class WifiActivity extends AppCompatActivity {
                 }
                 catch (Exception e) {
                     e.printStackTrace();
+                }finally {
+                    try{
+                        if (socket != null)
+                             socket.close();
+                    }catch (IOException e){
+
+                    }
+
                 }
             }
         }).start();
@@ -227,5 +265,7 @@ public class WifiActivity extends AppCompatActivity {
         return true;
 
     }
+
+
 
 }

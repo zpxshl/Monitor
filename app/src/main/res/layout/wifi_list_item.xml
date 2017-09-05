@@ -10,7 +10,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <com.example.pxshl.download.widget.IconTextView
+        <com.example.pxshl.yc_monitior.widget.IconTextView
             android:id="@+id/ivIntensity"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -24,7 +24,7 @@
 
 
 
-        <com.example.pxshl.download.widget.IconTextView
+        <com.example.pxshl.yc_monitior.widget.IconTextView
             android:id="@+id/ivNeedCode"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
