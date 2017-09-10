@@ -63,7 +63,7 @@ public class DownLoadFragment extends Fragment {
 
         if (mView == null){
             mView = inflater.inflate(R.layout.fragment_download,null);
-    //        init();
+            init();
         }
 
         return mView;

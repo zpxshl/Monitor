@@ -74,7 +74,8 @@ public class TcpConnect {
                     if (in != null){
                         try {
                             in.close();
-                            //mSocket.close();
+                            mSocket.close();
+                            mSocket = null;
                         }catch (Exception e){
                             e.printStackTrace();
                         }

@@ -214,6 +214,7 @@ public class LiveFragment extends Fragment {
                 VIDEO_WIDTH, VIDEO_HEIGHT);
         mediaFormat.setByteBuffer("csd-0"  , ByteBuffer.wrap(sps));
         mediaFormat.setByteBuffer("csd-1", ByteBuffer.wrap(pps));
+
         mCodec.configure(mediaFormat,mSurfaceView.getHolder().getSurface(), null, 0);
         mCodec.start();
 

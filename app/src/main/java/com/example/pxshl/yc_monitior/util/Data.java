@@ -12,7 +12,8 @@ public class Data {
     public static String account = "";
     public static String password = "";
 
-    public final static String SERVER_IP = "192.168.1.160";
+    public final static String SERVER_IP = "119.23.240.131";
+  //  public final static String SERVER_IP = "119.23.240.122";
     public final static String MONITOR_WIFI_IP = "172.24.1.1";
     public  static int UDP_PORT = 20000; //初始化为20000，会根据实际情况更改
 
