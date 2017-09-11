@@ -29,11 +29,17 @@ public class MainActivity extends AppCompatActivity{
     private ViewPager mViewPager;
     private BottomNavigationView mNavigation;
 
+
+
+
+
+
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
 
         @Override
         public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+
 
             mViewPager.setCurrentItem(item.getOrder());
             return true;
@@ -74,6 +80,8 @@ public class MainActivity extends AppCompatActivity{
         mNavigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
         mViewPager = (ViewPager) findViewById(R.id.viewPager);
         mList = new ArrayList<>();
+
+
         mList.add(new LiveFragment());
         mList.add(new DownLoadFragment());
         mList.add(new SettingsFragment());
@@ -98,6 +106,7 @@ public class MainActivity extends AppCompatActivity{
 
             @Override
             public void onPageSelected(int position) {
+
                 mNavigation.getMenu().getItem(position).setChecked(true);
             }
 
@@ -124,8 +133,5 @@ public class MainActivity extends AppCompatActivity{
         }
     }
 
-    @Override
-    public void onBackPressed() {
-        moveTaskToBack(true);
-    }
+
 }

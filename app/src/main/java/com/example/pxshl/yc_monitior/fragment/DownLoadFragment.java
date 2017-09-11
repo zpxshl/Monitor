@@ -8,10 +8,12 @@ import android.content.IntentFilter;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ExpandableListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.pxshl.yc_monitior.R;
@@ -40,6 +42,7 @@ public class DownLoadFragment extends Fragment {
     private List<String> groupsList;    //一级列表
     private Map<Integer, List<FileInfo>> childMap; //二级列表
     private MyReceiver mReceiver;
+    private TextView mText;
 
     private Activity mActivity;  //防止当Activity被系统回收（或暂时回收时，getActivity（）返回null）
     private View mView;
@@ -48,6 +51,7 @@ public class DownLoadFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setRetainInstance(true); //Activity被销毁再重新生成时，该fragment不会被重新构造
+
     }
 
 
@@ -65,6 +69,8 @@ public class DownLoadFragment extends Fragment {
             mView = inflater.inflate(R.layout.fragment_download,null);
             init();
         }
+
+
 
         return mView;
     }
@@ -94,6 +100,7 @@ public class DownLoadFragment extends Fragment {
      */
     public void init() {
 
+        mText = (TextView) mView.findViewById(R.id.downFrag_text);
         mListView = (ExpandableListView) mView.findViewById(R.id.show_data_list_view);
         groupsList = new ArrayList<String>();
         childMap = new HashMap<Integer, List<FileInfo>>();
@@ -106,7 +113,7 @@ public class DownLoadFragment extends Fragment {
             @Override
             public void onFinish(String response) {
                 if (response.equals("no")){
-                    runOnUIThreadToast("监控器不在线");
+                    connectError("监控器不在线");
                     return;
                 }else {
 
@@ -159,7 +166,7 @@ public class DownLoadFragment extends Fragment {
 
             @Override
             public void onError() {
-                runOnUIThreadToast("连接服务器失败");
+                connectError("连接服务器失败");
             }
         });
 
@@ -219,17 +226,40 @@ public class DownLoadFragment extends Fragment {
     }
 
 
-    private void runOnUIThreadToast(final String msg){
+    private void connectError(final String msg){
         if (mActivity == null){
             return;
         }else {
             mActivity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
+                    mText.setText("监控器不在线");
                     Toast.makeText(getContext(),msg,Toast.LENGTH_SHORT).show();
                 }
             });
         }
+    }
+
+    @Override
+    public void onResume() {  //捕获返回键
+
+        super.onResume();
+
+        getView().setFocusableInTouchMode(true);
+        getView().requestFocus();
+        getView().setOnKeyListener(new View.OnKeyListener() {
+            @Override
+            public boolean onKey(View v, int keyCode, KeyEvent event) {
+
+                if (event.getAction() == KeyEvent.ACTION_UP && keyCode == KeyEvent.KEYCODE_BACK){
+                    mActivity.moveTaskToBack(true);
+                    return true;
+
+                }
+
+                return false;
+            }
+        });
     }
 
 

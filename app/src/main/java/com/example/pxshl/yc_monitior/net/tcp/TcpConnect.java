@@ -25,7 +25,7 @@ public class TcpConnect {
     }
 
     //发送信息
-    public static void send(final String message){
+    public static synchronized void send(final String message){
         Log.e("message",message + "");
         new Thread(new Runnable() {
             @Override
@@ -45,7 +45,7 @@ public class TcpConnect {
         }).start();
     }
 
-    public static void receive(final RequestCallBack requestCallBack){
+    public static synchronized void receive(final RequestCallBack requestCallBack){
         new Thread(new Runnable() {
             BufferedInputStream in = null;
             StringBuilder sb = new StringBuilder();
