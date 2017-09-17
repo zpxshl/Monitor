@@ -15,6 +15,7 @@ import android.view.MenuItem;
 import android.widget.Toast;
 
 import com.example.pxshl.yc_monitior.R;
+import com.example.pxshl.yc_monitior.fragment.AlarmFragment;
 import com.example.pxshl.yc_monitior.fragment.DownLoadFragment;
 import com.example.pxshl.yc_monitior.fragment.LiveFragment;
 import com.example.pxshl.yc_monitior.fragment.SettingsFragment;
@@ -84,7 +85,9 @@ public class MainActivity extends AppCompatActivity{
 
         mList.add(new LiveFragment());
         mList.add(new DownLoadFragment());
+        mList.add(new AlarmFragment());
         mList.add(new SettingsFragment());
+
 
         mViewPager.setAdapter(new FragmentPagerAdapter(getSupportFragmentManager()) {
             @Override

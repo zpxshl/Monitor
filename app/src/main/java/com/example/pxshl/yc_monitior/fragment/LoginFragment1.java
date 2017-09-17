@@ -22,7 +22,7 @@ import android.widget.Toast;
 import com.example.pxshl.yc_monitior.R;
 import com.example.pxshl.yc_monitior.activity.MainActivity;
 import com.example.pxshl.yc_monitior.inyerface.RequestCallBack;
-import com.example.pxshl.yc_monitior.net.tcp.TcpConnect;
+import com.example.pxshl.yc_monitior.net.tcp.TcpTool;
 import com.example.pxshl.yc_monitior.util.Data;
 import com.example.pxshl.yc_monitior.util.Tools;
 
@@ -102,9 +102,7 @@ public class LoginFragment1 extends Fragment{
                     pd.setMessage("正在验证帐号密码，请稍后......");
                     pd.show();
 
-
-                    TcpConnect.send(Data.LOGIN + " " +  account + " " + Tools.pwdToMd5(password));
-                    TcpConnect.receive(new RequestCallBack() {
+                    TcpTool.connect(Data.LOGIN + " " +  account + " " + Tools.pwdToMd5(password),new RequestCallBack() {
 
                         String msg = "";
 
@@ -140,7 +138,8 @@ public class LoginFragment1 extends Fragment{
                         public void onError() {
                             runOnUIThreadToast("联网验证失败，请稍后重试");
                         }
-                    });
+                    },true);
+
                 }else {
                     Toast.makeText(getContext(),"请输入完整的帐号和密码",Toast.LENGTH_SHORT).show();
                 }

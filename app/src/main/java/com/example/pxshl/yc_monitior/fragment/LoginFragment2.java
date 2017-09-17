@@ -21,7 +21,7 @@ import android.widget.Toast;
 import com.example.pxshl.yc_monitior.R;
 import com.example.pxshl.yc_monitior.activity.LoginActivity;
 import com.example.pxshl.yc_monitior.inyerface.RequestCallBack;
-import com.example.pxshl.yc_monitior.net.tcp.TcpConnect;
+import com.example.pxshl.yc_monitior.net.tcp.TcpTool;
 import com.example.pxshl.yc_monitior.util.Data;
 import com.example.pxshl.yc_monitior.util.Tools;
 
@@ -114,8 +114,8 @@ public class LoginFragment2 extends Fragment {
                                 if (old_pwd.equals(Data.password)){
                                     if (new_pwd1.equals(new_pwd2)){
                                         //向服务器发送修改密码命令
-                                        TcpConnect.send(Data.CHANGE_PASSWORD + " " + Data.account + " " + Tools.pwdToMd5(Data.password) + " " + new_pwd1);
-                                        TcpConnect.receive(new RequestCallBack() {
+
+                                        TcpTool.connect(Data.CHANGE_PASSWORD + " " + Data.account + " " + Tools.pwdToMd5(Data.password) + " " + new_pwd1,new RequestCallBack() {
                                             @Override
                                             public void onFinish(String response) {
                                                 dialog.cancel();
@@ -152,7 +152,7 @@ public class LoginFragment2 extends Fragment {
                                                 dialog.cancel();
                                                 runOnUIThreadToast("很抱歉，修改密码错误，请稍后重试");
                                             }
-                                        });
+                                        },true);
 
                                     }else {
                                         runOnUIThreadToast("两次输入的新密码不一致，请核对后重新输入");

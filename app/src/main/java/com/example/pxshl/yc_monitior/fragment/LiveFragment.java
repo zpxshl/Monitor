@@ -25,8 +25,10 @@ import com.example.pxshl.yc_monitior.inyerface.SendCallBack;
 import com.example.pxshl.yc_monitior.net.rtp.RtpPacket;
 import com.example.pxshl.yc_monitior.net.rtp.RtpSocket;
 import com.example.pxshl.yc_monitior.net.rtp.SipdroidSocket;
-import com.example.pxshl.yc_monitior.net.tcp.TcpConnect;
-import com.example.pxshl.yc_monitior.net.udp.UdpConnect;
+
+import com.example.pxshl.yc_monitior.net.tcp.TcpTool;
+
+import com.example.pxshl.yc_monitior.net.udp.UdpTool;
 import com.example.pxshl.yc_monitior.util.Data;
 import com.example.pxshl.yc_monitior.util.Tools;
 
@@ -92,8 +94,23 @@ public class LiveFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 if (!isRunning) {
-                    TcpConnect.send(Data.START_PLAY + " " + Data.account + " " + Tools.pwdToMd5(Data.password));
-                    TcpConnect.receive(new RequestCallBack() {
+
+
+                    UdpTool.UdpBroadCast(new RequestCallBack() {
+                        @Override
+                        public void onFinish(String response) {
+                            Log.e("LiveFragment","in local area net" + response);
+                        }
+
+                        @Override
+                        public void onError() {
+                            Log.e("LiveFragment","no in local area net");
+                        }
+                    });
+
+
+
+                /*    TcpTool.connect(Data.START_PLAY + " " + Data.account + " " + Tools.pwdToMd5(Data.password),new RequestCallBack() {
                         @Override
                         public void onFinish(String response) {
                             Log.e("play_response", response);
@@ -119,7 +136,7 @@ public class LiveFragment extends Fragment {
                             }
 
 
-                            UdpConnect.sendUDP("app", port, new SendCallBack() {
+                            UdpTool.sendUDP("app", port, new SendCallBack() {
                                 @Override
                                 public void onFinish() {
                                     startReceive();
@@ -136,13 +153,12 @@ public class LiveFragment extends Fragment {
                         public void onError() {
 
                         }
-                    });
-
+                    },true);*/
                     play.setText("停止");
 
                 } else {
                     close();
-                    TcpConnect.send(Data.STOP_PLAY + " " + Data.account + " " + Tools.pwdToMd5(Data.password));
+                    TcpTool.connect(Data.STOP_PLAY + " " + Data.account + " " + Tools.pwdToMd5(Data.password),null,false);
                     play.setText("播放");
 
                 }
@@ -328,6 +344,13 @@ public class LiveFragment extends Fragment {
                 System.arraycopy(h254Header, 0, h264Frmbuf, 0, 4);
                 System.arraycopy(frmbuf, 0, h264Frmbuf, 4, frmSize);
                 onFrame(h264Frmbuf, 0, frmSize + 4);
+
+                try {
+                    Thread.sleep(33);    //30帧是硬件的极限，将播放帧率控制在30帧以下，避免由于网络抖动导致的“超高帧率播放”
+                }catch (InterruptedException e){
+                    e.printStackTrace();
+                }
+
             }
 
             if (rtp_socket != null) {

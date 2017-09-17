@@ -12,9 +12,11 @@ public class Data {
     public static String account = "";
     public static String password = "";
 
-    public final static String SERVER_IP = "119.23.240.131";
-  //  public final static String SERVER_IP = "119.23.240.122";
+   // public final static String SERVER_IP = "119.23.240.131";
+    public final static int SERVER_PORT = 8890;
+    public final static String SERVER_IP = "192.168.1.117";
     public final static String MONITOR_WIFI_IP = "172.24.1.1";
+    public final static int MONITOR_WIFI_PORT = 8888;
     public  static int UDP_PORT = 20000; //初始化为20000，会根据实际情况更改
 
     //和服务器约定好的命令，用char表示
@@ -27,7 +29,7 @@ public class Data {
     public final static char LIST_FILE  = 'l';
     public final static char FILE_SIZE  = 'S';
     public final static char DOWNLOAD  = 'D';
-    public final static char PHOTO = 105; //图片 jpg
-    public final static char alarm = 106;
+    public final static char PHOTO = 'p'; //图片 jpg
+    public final static char ALARM = 'a';
 
 }

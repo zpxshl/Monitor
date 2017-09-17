@@ -20,7 +20,7 @@ import com.example.pxshl.yc_monitior.R;
 import com.example.pxshl.yc_monitior.adapter.MyExpanableListViewAdapter;
 import com.example.pxshl.yc_monitior.inyerface.RequestCallBack;
 import com.example.pxshl.yc_monitior.model.FileInfo;
-import com.example.pxshl.yc_monitior.net.tcp.TcpConnect;
+import com.example.pxshl.yc_monitior.net.tcp.TcpTool;
 import com.example.pxshl.yc_monitior.service.DownloadService;
 import com.example.pxshl.yc_monitior.util.Data;
 import com.example.pxshl.yc_monitior.util.Tools;
@@ -70,8 +70,6 @@ public class DownLoadFragment extends Fragment {
             init();
         }
 
-
-
         return mView;
     }
 
@@ -108,8 +106,7 @@ public class DownLoadFragment extends Fragment {
         mListView.setAdapter(mAdapter);
         onChildOnClickListener();
 
-        TcpConnect.send(Data.LIST_FILE + " " + Data.account + " " + Tools.pwdToMd5(Data.password));
-        TcpConnect.receive(new RequestCallBack() {
+        TcpTool.connect(Data.LIST_FILE + " " + Data.account + " " + Tools.pwdToMd5(Data.password),new RequestCallBack() {
             @Override
             public void onFinish(String response) {
                 if (response.equals("no")){
@@ -168,10 +165,7 @@ public class DownLoadFragment extends Fragment {
             public void onError() {
                 connectError("连接服务器失败");
             }
-        });
-
-
-
+        },true);
 
     }
 

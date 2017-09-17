@@ -211,24 +211,12 @@ public class WifiActivity extends AppCompatActivity {
                 OutputStream os;
                 Socket socket = null;
                 try {
-                    socket = new Socket(Data.MONITOR_WIFI_IP,8890);
+                    socket = new Socket(Data.MONITOR_WIFI_IP,Data.MONITOR_WIFI_PORT);
                     os = socket.getOutputStream();
                     byte[] buffer = (msg).getBytes();
                     os.write(buffer);
                     os.flush();
 
-
-                /*    BufferedInputStream in = new BufferedInputStream(socket.getInputStream());
-                    StringBuilder sb = new StringBuilder();
-                    byte[] buff = new byte[1024];
-
-                    int len;
-                    while  (  (len = in.read(buff)) != -1 ) {
-                        for (int i = 0; i < len ;i++) {
-                            sb.append((char) buff[i]);
-                        }
-                        Log.e("onFinish",sb.toString());
-                    }*/
 
 
                     if (isMonitorConnect()){

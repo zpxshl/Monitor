@@ -8,7 +8,7 @@ import android.os.IBinder;
 
 import com.example.pxshl.yc_monitior.inyerface.RequestCallBack;
 import com.example.pxshl.yc_monitior.model.FileInfo;
-import com.example.pxshl.yc_monitior.net.tcp.TcpConnect;
+import com.example.pxshl.yc_monitior.net.tcp.TcpTool;
 import com.example.pxshl.yc_monitior.util.Data;
 import com.example.pxshl.yc_monitior.util.DownloadTask;
 import com.example.pxshl.yc_monitior.util.Tools;
@@ -64,61 +64,61 @@ public class DownloadService extends Service {
 
     private void initDownLoad(final FileInfo fileInfo) {
 
-            TcpConnect.send(Data.FILE_SIZE + " " + Data.account + " " + Tools.pwdToMd5(Data.password) + " " +   fileInfo.getFileName());
-            TcpConnect.receive(new RequestCallBack() {
-                @Override
-                public void onFinish(String response) {
+        TcpTool.connect(Data.FILE_SIZE + " " + Data.account + " " + Tools.pwdToMd5(Data.password) + " " +   fileInfo.getFileName(),new RequestCallBack() {
+            @Override
+            public void onFinish(String response) {
 
-                    long fileSize;
-                    try{
-                        //防止服务器抽风,返回错误数据
-                       fileSize = Long.parseLong(response.trim());
-                    }catch (NumberFormatException e){
-                        downloadFail(fileInfo);
-                        return ;
-                    }
+                long fileSize;
+                try{
+                    //防止服务器抽风,返回错误数据
+                    fileSize = Long.parseLong(response.trim());
+                }catch (NumberFormatException e){
+                    downloadFail(fileInfo);
+                    return ;
+                }
 
-                    if (fileSize <= 0){
-                        downloadFail(fileInfo);
-                        return;
-                    }
-                    RandomAccessFile raf = null;
-                    fileInfo.setLength(fileSize);
+                if (fileSize <= 0){
+                    downloadFail(fileInfo);
+                    return;
+                }
+                RandomAccessFile raf = null;
+                fileInfo.setLength(fileSize);
 
-                    File dir = new File(DOWNLOAD_PATH + fileInfo.getFileName().split("/")[0]);
-                    if (!dir.exists()) {
-                        dir.mkdirs();
-                    }
+                File dir = new File(DOWNLOAD_PATH + fileInfo.getFileName().split("/")[0]);
+                if (!dir.exists()) {
+                    dir.mkdirs();
+                }
 
-                    File file = new File(dir, fileInfo.getFileName().split("/")[1]);
+                File file = new File(dir, fileInfo.getFileName().split("/")[1]);
 
-                    try {
-                        raf = new RandomAccessFile(file, "rwd");
-                        raf.setLength(fileSize);
+                try {
+                    raf = new RandomAccessFile(file, "rwd");
+                    raf.setLength(fileSize);
 
-                        DownloadTask task = new DownloadTask(DownloadService.this, fileInfo);
-                        task.start();
-                        mTasks.put(fileInfo.getId(), task); //内存泄漏？
+                    DownloadTask task = new DownloadTask(DownloadService.this, fileInfo);
+                    task.start();
+                    mTasks.put(fileInfo.getId(), task); //内存泄漏？
 
-                    } catch (IOException e) {
-                        downloadFail(fileInfo);
-                        e.printStackTrace();
-                    }finally {
-                        if (raf != null){
-                            try {
-                                raf.close();
-                            }catch (IOException e){
-                                e.printStackTrace();
-                            }
+                } catch (IOException e) {
+                    downloadFail(fileInfo);
+                    e.printStackTrace();
+                }finally {
+                    if (raf != null){
+                        try {
+                            raf.close();
+                        }catch (IOException e){
+                            e.printStackTrace();
                         }
                     }
                 }
+            }
 
-                @Override
-                public void onError() {
-                    downloadFail(fileInfo);
-                }
-            });
+            @Override
+            public void onError() {
+                downloadFail(fileInfo);
+            }
+        },true);
+
     }
 
     @Override
