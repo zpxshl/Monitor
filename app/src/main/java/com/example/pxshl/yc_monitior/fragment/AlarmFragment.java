@@ -9,12 +9,11 @@ import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
-import android.widget.ListView;
-import android.widget.SimpleAdapter;
+import android.widget.ExpandableListView;
 import android.widget.TextView;
 
 import com.example.pxshl.yc_monitior.R;
+import com.example.pxshl.yc_monitior.adapter.AlarmELVAdapter;
 import com.example.pxshl.yc_monitior.inyerface.RequestCallBack;
 import com.example.pxshl.yc_monitior.net.tcp.TcpTool;
 import com.example.pxshl.yc_monitior.util.Data;
@@ -34,11 +33,14 @@ import java.util.Map;
 
 public class AlarmFragment extends Fragment {
 
-    private SimpleAdapter mSimpleAdapter;
-    private List<Map<String,Object>> mListItems = new ArrayList<>();
+
     private Activity mActivity;
     private TextView mTextView;
     private View mView;
+
+    private AlarmELVAdapter mAdapter;    //适配器
+    private List<String> groupsList = new ArrayList<>(); //一级列表
+    private Map<Integer, List<Bitmap>> childMap = new HashMap<>(); //二级列表
 
     @Override
     public void onAttach(Context context) {
@@ -67,29 +69,29 @@ public class AlarmFragment extends Fragment {
             init();
         }
 
-
         return mView;
     }
 
     private void init(){
 
         mTextView = (TextView) mView.findViewById(R.id.frag_alarm_text);
-        ListView listView = (ListView) mView.findViewById(R.id.frag_alarm_listView);
-        mSimpleAdapter = new SimpleAdapter(mActivity,mListItems,R.layout.alarm_list_item,new String[] {"data","photo"},new int[] {R.id.alarm_date,R.id.alarm_photo});
-        mSimpleAdapter.setViewBinder(new SimpleAdapter.ViewBinder() { //SimpleAdapter默认是无法加载从网络获取的bitmap对象，需要此特殊操作
+        ExpandableListView listView = (ExpandableListView) mView.findViewById(R.id.frag_alarm_listView);
+        mAdapter = new AlarmELVAdapter(getContext(),groupsList,childMap);
+        listView.setAdapter(mAdapter);
+        loadGroupsInfo();
+
+        listView.setOnGroupExpandListener(new ExpandableListView.OnGroupExpandListener() {
             @Override
-            public boolean setViewValue(View view, Object data, String textRepresentation) {
-                if((view instanceof ImageView) && (data instanceof Bitmap)) {
-                    ImageView imageView = (ImageView) view;
-                    imageView.setImageBitmap((Bitmap) data);
-                    return true;
-                }
-                return false;
+            public void onGroupExpand(int groupPosition) {
+                loadChildsInfo(groupPosition);
             }
         });
-        listView.setAdapter(mSimpleAdapter);
 
-        TcpTool.connect(Data.ALARM + " " + Data.account + " " + Tools.pwdToMd5(Data.password), new RequestCallBack() {
+    }
+
+    private void loadGroupsInfo() {
+
+        new TcpTool().connect(Data.ALARM + " " + Data.account + " " + Tools.pwdToMd5(Data.password), new RequestCallBack() {
             @Override
             public void onFinish(String response) {
 
@@ -106,16 +108,57 @@ public class AlarmFragment extends Fragment {
                     return;
                 }
 
-                String[] photoNames = response.split(" ");
-                for (String photoName : photoNames) {//加载图片
+                String[] dates = response.split(" ");
+
+                for (int i = 0 ;i < dates.length ;i++) {
+                    groupsList.add(dates[i]);
+                    childMap.put(i,new ArrayList<Bitmap>());
+                }
+
+                if (mActivity != null){
+                    mActivity.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            mAdapter.notifyDataSetChanged();
+                        }
+                    });
+                }
+
+            }
+
+            @Override
+            public void onError() {
+
+            }
+        });
+    }
+
+    private void loadChildsInfo(final int groupPosition){
+        final String date = groupsList.get(groupPosition);
+
+        new TcpTool().connect(Data.PHOTO_DATE + " " + Data.account + " " + Tools.pwdToMd5(Data.password), new RequestCallBack() {
+            @Override
+            public void onFinish(String response) {
+                if (response.contains("no")){
+
+                    return;
+                }
+
+                String[] dates = response.split(" ");
+                List<Bitmap> list = childMap.get(groupPosition);
+                for (String time : dates) {
 
                     Socket socket = null;
-                    OutputStream os;
 
                     try {
-                        socket = new Socket(Data.SERVER_IP, Data.SERVER_PORT);   //此时已经在子线程中，可直接操作网络
+
+
+                        OutputStream os;
+                        socket = new Socket(Data.SERVER_IP,
+                                Data.SERVER_PORT);
                         os = socket.getOutputStream();
-                        byte[] buffer = (Data.PHOTO + " " + Data.account + " " + Tools.pwdToMd5(Data.password) + photoName +  '\n').getBytes();
+                        byte[] buffer = (Data.PHOTO + " " + Data.account
+                                + " " + Tools.pwdToMd5(Data.password) + date + " "+ time +  '\n').getBytes();
                         os.write(buffer);
                         os.flush();
 
@@ -125,21 +168,8 @@ public class AlarmFragment extends Fragment {
                             continue;
                         }
 
-                        Map<String,Object> listItem = new HashMap<>();
-                        listItem.put("data",photoName);
-                        listItem.put("photo",bmp);
-                        mListItems.add(listItem);
-
-                        if (mActivity != null){
-                            mActivity.runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    mSimpleAdapter.notifyDataSetChanged();
-                                }
-                            });
-                        }
-
-
+                        list.add(bmp);
+                        mAdapter.notifyDataSetChanged();
 
                     } catch (IOException e) {
                         e.printStackTrace();
@@ -150,17 +180,17 @@ public class AlarmFragment extends Fragment {
                             e.printStackTrace();
                         }
                     }
-
                 }
+
             }
 
             @Override
             public void onError() {
 
             }
-        },true);
+        });
+
 
     }
-
 
 }

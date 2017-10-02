@@ -64,7 +64,7 @@ public class DownloadService extends Service {
 
     private void initDownLoad(final FileInfo fileInfo) {
 
-        TcpTool.connect(Data.FILE_SIZE + " " + Data.account + " " + Tools.pwdToMd5(Data.password) + " " +   fileInfo.getFileName(),new RequestCallBack() {
+          new TcpTool().connect(Data.FILE_SIZE + " " + Data.account + " " + Tools.pwdToMd5(Data.password) + " " +   fileInfo.getFileName(),new RequestCallBack() {
             @Override
             public void onFinish(String response) {
 
@@ -117,7 +117,7 @@ public class DownloadService extends Service {
             public void onError() {
                 downloadFail(fileInfo);
             }
-        },true);
+        });
 
     }
 

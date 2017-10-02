@@ -96,7 +96,7 @@ public class MyExpanableListViewAdapter extends BaseExpandableListAdapter {
     public View getGroupView(int i, boolean b, View view, ViewGroup viewGroup) {
         GroupsViewHolder groupsViewHolder = null;
         if (view == null) {
-            view = LayoutInflater.from(mContext).inflate(R.layout.groups, null);
+            view = LayoutInflater.from(mContext).inflate(R.layout.groups_download, null);
             groupsViewHolder = new GroupsViewHolder(view);
             view.setTag(groupsViewHolder);
         } else {
@@ -111,7 +111,7 @@ public class MyExpanableListViewAdapter extends BaseExpandableListAdapter {
         final ChildsViewHolder childsViewHolder;
         final FileInfo fileInfo = mChildsMap.get(i).get(i1);
         if (view == null) {
-            view = LayoutInflater.from(mContext).inflate(R.layout.childs, null);
+            view = LayoutInflater.from(mContext).inflate(R.layout.childs_download, null);
             childsViewHolder = new ChildsViewHolder(view);
             childsViewHolder.progressBar.setMax(100);
             view.setTag(childsViewHolder);
@@ -185,7 +185,7 @@ public class MyExpanableListViewAdapter extends BaseExpandableListAdapter {
      * 一级标题的ViewHolder
      */
     static class GroupsViewHolder {
-        @BindView(R.id.group_tv)
+        @BindView(R.id.group_download_tv)
         TextView groupsTv;
 
         public GroupsViewHolder(View view) {

@@ -1,24 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-
-    <TextView
-        android:id="@+id/downFrag_text"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="可下载的录像"
-        android:textSize="30sp"
-        android:gravity="center"/>
-
-    <ExpandableListView
-        android:id="@+id/show_data_list_view"
-        android:layout_marginTop="5dp"
+    <android.support.v4.widget.SwipeRefreshLayout
+        android:id="@+id/downFrag_srl"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
-    </ExpandableListView>
 
-</LinearLayout>
+
+
+        <ExpandableListView
+            android:id="@+id/show_data_list_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+        </ExpandableListView>
+
+        <ImageView
+            android:id="@+id/empty_view"
+            android:background="@drawable/tusiji"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+    </android.support.v4.widget.SwipeRefreshLayout>
+
+
+
+</FrameLayout>

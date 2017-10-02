@@ -102,7 +102,7 @@ public class LoginFragment1 extends Fragment{
                     pd.setMessage("正在验证帐号密码，请稍后......");
                     pd.show();
 
-                    TcpTool.connect(Data.LOGIN + " " +  account + " " + Tools.pwdToMd5(password),new RequestCallBack() {
+                    new TcpTool().connect(Data.LOGIN + " " +  account + " " + Tools.pwdToMd5(password),new RequestCallBack() {
 
                         String msg = "";
 
@@ -138,7 +138,7 @@ public class LoginFragment1 extends Fragment{
                         public void onError() {
                             runOnUIThreadToast("联网验证失败，请稍后重试");
                         }
-                    },true);
+                    });
 
                 }else {
                     Toast.makeText(getContext(),"请输入完整的帐号和密码",Toast.LENGTH_SHORT).show();

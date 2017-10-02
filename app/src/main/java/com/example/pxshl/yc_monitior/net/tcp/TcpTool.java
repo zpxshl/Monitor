@@ -17,8 +17,9 @@ import java.net.Socket;
 
 public class TcpTool {
 
+
     //发送，接受信息封装到一起，优点是能避免send与receive的socket不一致的情况
-    public static synchronized void connect(final String message, @Nullable final RequestCallBack requestCallBack,final boolean receive){
+    public void connect(final String message, @Nullable final RequestCallBack requestCallBack){
         Log.e("message",message);
         new Thread(new Runnable() {
             @Override
@@ -34,7 +35,7 @@ public class TcpTool {
                     os.write(buffer);
                     os.flush();
 
-                    if (receive){
+                    if (requestCallBack != null){
                         BufferedInputStream in = new BufferedInputStream(socket.getInputStream());
                         byte[] buff = new byte[1024];
 

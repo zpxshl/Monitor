@@ -8,6 +8,7 @@ import android.content.IntentFilter;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -42,7 +43,7 @@ public class DownLoadFragment extends Fragment {
     private List<String> groupsList;    //一级列表
     private Map<Integer, List<FileInfo>> childMap; //二级列表
     private MyReceiver mReceiver;
-    private TextView mText;
+    private SwipeRefreshLayout mSRL;
 
     private Activity mActivity;  //防止当Activity被系统回收（或暂时回收时，getActivity（）返回null）
     private View mView;
@@ -98,23 +99,35 @@ public class DownLoadFragment extends Fragment {
      */
     public void init() {
 
-        mText = (TextView) mView.findViewById(R.id.downFrag_text);
         mListView = (ExpandableListView) mView.findViewById(R.id.show_data_list_view);
         groupsList = new ArrayList<String>();
         childMap = new HashMap<Integer, List<FileInfo>>();
         mAdapter = new MyExpanableListViewAdapter(getContext(), groupsList, childMap);
         mListView.setAdapter(mAdapter);
         onChildOnClickListener();
+        loadFileList();
+        mSRL = (SwipeRefreshLayout) mView.findViewById(R.id.downFrag_srl);
+        mSRL.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                loadFileList();
+            }
+        });
 
-        TcpTool.connect(Data.LIST_FILE + " " + Data.account + " " + Tools.pwdToMd5(Data.password),new RequestCallBack() {
+    }
+
+    private void loadFileList() {
+        new TcpTool().connect(Data.LIST_FILE + " " + Data.account + " " + Tools.pwdToMd5(Data.password),new RequestCallBack() {
             @Override
             public void onFinish(String response) {
+
+                groupsList.clear();         //刷新后，先清除现有数据
+                childMap.clear();
+
                 if (response.equals("no")){
                     connectError("监控器不在线");
                     return;
                 }else {
-
-
 
                     int file_id = 0;
                     int child_id = 0;
@@ -155,6 +168,7 @@ public class DownLoadFragment extends Fragment {
                             @Override
                             public void run() {
                                 mAdapter.notifyDataSetChanged();
+                                mSRL.setRefreshing(false);
                             }
                         });
                     }
@@ -165,9 +179,9 @@ public class DownLoadFragment extends Fragment {
             public void onError() {
                 connectError("连接服务器失败");
             }
-        },true);
-
+        });
     }
+
 
     public void onChildOnClickListener() {
         mListView.setOnChildClickListener(new ExpandableListView.OnChildClickListener() {
@@ -201,6 +215,8 @@ public class DownLoadFragment extends Fragment {
     }
 
 
+
+
     //接收广播，更新fileInfo，调用mAdapter的update方法
     class MyReceiver extends BroadcastReceiver {
 
@@ -220,17 +236,16 @@ public class DownLoadFragment extends Fragment {
     }
 
 
-    private void connectError(final String msg){
-        if (mActivity == null){
-            return;
-        }else {
+    private void connectError(final String msg) {
+        if (mActivity != null) {
             mActivity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    mText.setText("监控器不在线");
-                    Toast.makeText(getContext(),msg,Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), msg, Toast.LENGTH_SHORT).show();
+                    mSRL.setRefreshing(false);
                 }
             });
+
         }
     }
 

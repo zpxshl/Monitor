@@ -19,7 +19,10 @@ import com.example.pxshl.yc_monitior.fragment.AlarmFragment;
 import com.example.pxshl.yc_monitior.fragment.DownLoadFragment;
 import com.example.pxshl.yc_monitior.fragment.LiveFragment;
 import com.example.pxshl.yc_monitior.fragment.SettingsFragment;
+import com.example.pxshl.yc_monitior.inyerface.RequestCallBack;
+import com.example.pxshl.yc_monitior.net.tcp.TcpTool;
 import com.example.pxshl.yc_monitior.util.Data;
+import com.example.pxshl.yc_monitior.util.Tools;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,11 +32,6 @@ public class MainActivity extends AppCompatActivity{
     private List<Fragment> mList;
     private ViewPager mViewPager;
     private BottomNavigationView mNavigation;
-
-
-
-
-
 
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
@@ -63,6 +61,7 @@ public class MainActivity extends AppCompatActivity{
 
     private void init() {
 
+
         if (!Data.isLogin){
             SharedPreferences preferences = getSharedPreferences("properties",MODE_PRIVATE);
             Data.isLogin = preferences.getBoolean("isLogin",false);
@@ -76,6 +75,8 @@ public class MainActivity extends AppCompatActivity{
                 return;
             }
         }
+
+
 
         mNavigation = (BottomNavigationView) findViewById(R.id.navigation);
         mNavigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);

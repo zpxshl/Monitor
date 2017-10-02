@@ -53,7 +53,7 @@ public class LiveFragment extends Fragment {
     private SurfaceView mSurfaceView;
     private MediaCodec mCodec;
     private Activity mActivity;
-
+    private Long mCurrentTime;
 
     // Video Constants
     private final static String MIME_TYPE = "video/avc"; // H.264 Advanced Video
@@ -93,6 +93,16 @@ public class LiveFragment extends Fragment {
         play.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
+
+                if (System.currentTimeMillis() - mCurrentTime < 3000){  //服务器要求的
+                    Toast.makeText(getContext(),"正在加载，请稍后",Toast.LENGTH_SHORT).show();
+                    mCurrentTime = System.currentTimeMillis();
+                    return;
+                }
+
+                mCurrentTime = System.currentTimeMillis();
+
                 if (!isRunning) {
 
 
@@ -109,8 +119,8 @@ public class LiveFragment extends Fragment {
                     });
 
 
-
-                /*    TcpTool.connect(Data.START_PLAY + " " + Data.account + " " + Tools.pwdToMd5(Data.password),new RequestCallBack() {
+                /*    TcpTool tcpTool = new TcpTool(Data.SERVER_IP,Data.SERVER_PORT_1);
+                    tcpTool.connect(Data.START_PLAY + " " + Data.account + " " + Tools.pwdToMd5(Data.password),new RequestCallBack() {
                         @Override
                         public void onFinish(String response) {
                             Log.e("play_response", response);
@@ -158,10 +168,13 @@ public class LiveFragment extends Fragment {
 
                 } else {
                     close();
-                    TcpTool.connect(Data.STOP_PLAY + " " + Data.account + " " + Tools.pwdToMd5(Data.password),null,false);
+                    new TcpTool().connect(Data.STOP_PLAY + " " + Data.account + " " + Tools.pwdToMd5(Data.password),null);
                     play.setText("播放");
 
                 }
+
+
+
             }
         });
 
