@@ -23,26 +23,13 @@ public class FileInfo  implements Serializable {
     //文件在list显示的位置
     private int i;
     private int i1;
-    /**
-     * 无参的构造
-     */
-    public FileInfo() {
-
-    }
 
     /**
      * 带参数的构造
      */
-    public FileInfo(int id, String fileName, boolean isFinish,
-                    long length, long finished, boolean isDownloading, int i, int i1) {
+    public FileInfo(int id, String fileName) {
         this.id = id;
         this.fileName = fileName;
-        this.isFinish = isFinish;
-        this.length = length;
-        this.finished = finished;
-        this.isDownloading = isDownloading;
-        this.i = i;
-        this.i1 = i1;
     }
 
     /**
@@ -98,9 +85,7 @@ public class FileInfo  implements Serializable {
         return finished;
     }
 
-    public void setFileName(String fileName) {
-        this.fileName = fileName;
-    }
+
 
     public void setFinish(boolean finish) {
         isFinish = finish;

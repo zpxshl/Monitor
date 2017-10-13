@@ -38,7 +38,7 @@ public class LoginFragment1 extends Fragment{
     private String account; //帐号
     private String password; //密码
     private ProgressDialog pd;
-
+    private View mView;
     private Activity mActivity;
 
 
@@ -66,99 +66,111 @@ public class LoginFragment1 extends Fragment{
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
 
-        View view = inflater.inflate(R.layout.fragment_login1,null);
+        if (mView == null){
+            mView = inflater.inflate(R.layout.fragment_login1,null);
 
-        final EditText accountEt = (EditText) view.findViewById(R.id.account_et);
-        final EditText passwordEt = (EditText) view.findViewById(R.id.password_et);
-        final CheckBox rembPass = (CheckBox) view.findViewById(R.id.remb_pass);
+            final EditText accountEt = (EditText) mView.findViewById(R.id.account_et);
+            final EditText passwordEt = (EditText) mView.findViewById(R.id.password_et);
+            final CheckBox rembPass = (CheckBox) mView.findViewById(R.id.remb_pass);
 
-        final CheckBox showPass = (CheckBox) view.findViewById(R.id.show_pass);
-        showPass.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (showPass.isChecked()) {
-                    //设置为可见
-                    passwordEt.setInputType(InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
-                } else {
-                    //设置为不可见
-                    passwordEt.setInputType(InputType.TYPE_TEXT_VARIATION_PASSWORD |InputType.TYPE_CLASS_TEXT);
+            final CheckBox showPass = (CheckBox) mView.findViewById(R.id.show_pass);
+            showPass.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                    if (showPass.isChecked()) {
+                        //设置为可见
+                        passwordEt.setInputType(InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
+                    } else {
+                        //设置为不可见
+                        passwordEt.setInputType(InputType.TYPE_TEXT_VARIATION_PASSWORD |InputType.TYPE_CLASS_TEXT);
+                    }
                 }
-            }
-        });
+            });
 
 
 
-        Button loginBtn = (Button) view.findViewById(R.id.login_btn);
-        loginBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String s= accountEt.getText().toString();
-                if (!accountEt.getText().toString().equals("") && !passwordEt.getText().toString().equals("")) {
-                    account = accountEt.getText().toString();
-                    password = passwordEt.getText().toString();
+            Button loginBtn = (Button) mView.findViewById(R.id.login_btn);
+            loginBtn.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    String s= accountEt.getText().toString();
+                    if (!accountEt.getText().toString().equals("") && !passwordEt.getText().toString().equals("")) {
+                        account = accountEt.getText().toString();
+                        password = passwordEt.getText().toString();
 
-                    pd = new ProgressDialog(mActivity);
-                    pd.setTitle("验证用户");
-                    pd.setMessage("正在验证帐号密码，请稍后......");
-                    pd.show();
+                        pd = new ProgressDialog(mActivity);
+                        pd.setTitle("验证用户");
+                        pd.setMessage("正在验证帐号密码，请稍后......");
+                        pd.show();
 
-                    new TcpTool().connect(Data.LOGIN + " " +  account + " " + Tools.pwdToMd5(password),new RequestCallBack() {
+                        new TcpTool().connect(Data.LOGIN + " " +  account + " " + Tools.pwdToMd5(password),new RequestCallBack() {
 
-                        String msg = "";
+                            String msg = "";
 
-                        @Override
-                        public void onFinish(String response) {
-                            pd.cancel();
-                            if (response.contains("true")) {
-                                Data.isLogin = true;
-                                Data.account = account;
-                                Data.password = password;
-
-
-                                if (rembPass.isChecked()) {
-                                    //储存帐号密码
-                                    SharedPreferences preferences = getContext().getSharedPreferences("properties", MODE_PRIVATE);
-                                    SharedPreferences.Editor editor = preferences.edit();
-                                    editor.putString("account", account);
-                                    editor.putString("password", password);
-                                    editor.putBoolean("isLogin", true);
-                                    editor.commit();
+                            @Override
+                            public void onFinish(String response) {
+                                if (pd != null){
+                                    pd.cancel();
                                 }
 
-                                runOnUIThreadToast(Data.account + " 欢迎您");
+                                if (response.equals("")){
+                                    showMsg("服务器异常，请稍后重试");
+                                } else if (response.contains("true")) {
+                                    Data.isLogin = true;
+                                    Data.account = account;
+                                    Data.password = password;
 
-                                Intent intent = new Intent(mActivity, MainActivity.class);
-                                startActivity(intent);
-                                mActivity.finish();
-                            } else {
-                                runOnUIThreadToast("帐号或密码错误，请重新输入");
+
+                                    if (rembPass.isChecked()) {
+                                        //储存帐号密码
+                                        SharedPreferences preferences = getContext().getSharedPreferences("properties", MODE_PRIVATE);
+                                        SharedPreferences.Editor editor = preferences.edit();
+                                        editor.putString("account", account);
+                                        editor.putString("password", password);
+                                        editor.putBoolean("isLogin", true);
+                                        editor.commit();
+                                    }
+
+                                    showMsg(Data.account + " 欢迎您");
+
+                                    Intent intent = new Intent(mActivity, MainActivity.class);
+                                    startActivity(intent);
+                                    mActivity.finish();
+                                } else {
+                                    showMsg("帐号或密码错误，请重新输入");
+                                }
                             }
-                        }
-                        @Override
-                        public void onError() {
-                            runOnUIThreadToast("联网验证失败，请稍后重试");
-                        }
-                    });
+                            @Override
+                            public void onError() {
+                                showMsg("联网验证失败，请稍后重试");
+                            }
+                        });
 
-                }else {
-                    Toast.makeText(getContext(),"请输入完整的帐号和密码",Toast.LENGTH_SHORT).show();
+                    }else {
+                        Toast.makeText(getContext(),"请输入完整的帐号和密码",Toast.LENGTH_SHORT).show();
+                    }
                 }
-            }
-        });
+            });
+        }
 
-        return view;
+
+
+
+        return mView;
     }
 
-    private void runOnUIThreadToast(final String msg){
-        if (mActivity == null){
-            return;
-        }else {
+    private void showMsg(final String msg) {
+        if (mActivity != null) {
             mActivity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    Toast.makeText(getContext(),msg,Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), msg, Toast.LENGTH_SHORT).show();
+                    if (pd != null) {
+                        pd.cancel();
+                    }
                 }
             });
+
         }
     }
 

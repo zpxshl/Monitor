@@ -5,14 +5,23 @@ import android.graphics.Bitmap;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.BaseExpandableListAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.pxshl.yc_monitior.R;
+import com.example.pxshl.yc_monitior.model.AlarmInfo;
+import com.example.pxshl.yc_monitior.util.Data;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.List;
 import java.util.Map;
+
 
 /**
  * Created by pxshl on 17-10-2.
@@ -25,9 +34,9 @@ public class AlarmELVAdapter extends BaseExpandableListAdapter{
     //一级项目列表
     List<String> mGroupsList;
     //二级项目列表,integer对应一级项目的id
-    Map<Integer, List<Bitmap>> mChildsMap;
+    Map<Integer, List<AlarmInfo>> mChildsMap;
 
-    public AlarmELVAdapter(Context context, List<String> groupsList, Map<Integer, List<Bitmap>> childsMap) {
+    public AlarmELVAdapter(Context context, List<String> groupsList, Map<Integer, List<AlarmInfo>> childsMap) {
         mContext = context;
         mGroupsList = groupsList;
         mChildsMap = childsMap;
@@ -89,7 +98,7 @@ public class AlarmELVAdapter extends BaseExpandableListAdapter{
     }
 
     @Override
-    public View getChildView(int groupPosition, int childPosition, boolean isLastChild, View convertView, ViewGroup parent) {
+    public View getChildView(final int groupPosition, final int childPosition, boolean isLastChild, View convertView, ViewGroup parent) {
         ChildViewHolder viewHolder = null;
 
         if (convertView == null){
@@ -101,7 +110,18 @@ public class AlarmELVAdapter extends BaseExpandableListAdapter{
             viewHolder = (ChildViewHolder) convertView.getTag();
         }
 
-        viewHolder.childIv.setImageBitmap(mChildsMap.get(groupPosition).get(childPosition));
+        viewHolder.childIv.setImageBitmap(mChildsMap.get(groupPosition).get(childPosition).getBitmap());
+
+        convertView.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+
+                AlarmInfo info = mChildsMap.get(groupPosition).get(childPosition);
+                save_photo(info.getBitmap(),Data.DL_PHOTO_PATH,info.getTime());
+                Toast.makeText(mContext,"图片已保存到内置储存/monitor/photo",Toast.LENGTH_SHORT).show();
+                return true;
+            }
+        });
 
         return convertView;
     }
@@ -110,6 +130,8 @@ public class AlarmELVAdapter extends BaseExpandableListAdapter{
     public boolean isChildSelectable(int groupPosition, int childPosition) {
         return false;
     }
+
+
 
 
     /**
@@ -121,5 +143,29 @@ public class AlarmELVAdapter extends BaseExpandableListAdapter{
 
     static class ChildViewHolder{
         public ImageView childIv;
+    }
+
+
+    private void save_photo(Bitmap bitmap,String dir,String fileName){
+        File d= new File(dir);
+        if (!d.exists()){
+            d.mkdirs();
+        }
+
+        OutputStream out = null;
+        try {
+            out = new FileOutputStream( new File(dir + File.separator + fileName + ".jpg"));
+            bitmap.compress(Bitmap.CompressFormat.JPEG,100,out);
+        }catch (IOException e){
+            e.printStackTrace();
+        }finally {
+            try {
+                out.close();
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+
+        }
+
     }
 }

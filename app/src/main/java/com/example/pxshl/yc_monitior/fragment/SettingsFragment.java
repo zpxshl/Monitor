@@ -29,7 +29,6 @@ public class SettingsFragment extends Fragment {
 
         Button login = (Button) view.findViewById(R.id.login);
         Button setWifi = (Button) view.findViewById(R.id.setWifi);
-        Button exit = (Button) view.findViewById(R.id.exit_btn);
 
         if (Data.isLogin){
             login.setText(Data.account + " 欢迎您");
@@ -52,12 +51,6 @@ public class SettingsFragment extends Fragment {
             }
         });
 
-        exit.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                System.exit(0);
-            }
-        });
 
         return view;
     }

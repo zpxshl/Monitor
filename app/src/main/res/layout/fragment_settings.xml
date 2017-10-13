@@ -7,7 +7,6 @@
     android:id="@+id/login"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:text="登陆"
     android:textSize="20sp"
     android:background="@drawable/oval"
     android:layout_marginLeft="22dp"
@@ -26,15 +25,18 @@
         android:layout_marginTop="22dp"/>
 
     <Button
-        android:id="@+id/exit_btn"
+        android:id="@+id/alarm_setting"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="退出应用"
+        android:text="未设置报警"
         android:textSize="20sp"
         android:background="@drawable/oval"
         android:layout_marginLeft="22dp"
         android:layout_marginRight="22dp"
-        android:layout_marginTop="44dp"/>
+        android:layout_marginTop="22dp"/>
+
+
+
 
 
 </LinearLayout>

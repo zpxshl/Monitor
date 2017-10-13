@@ -1,35 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--登录界面-->
-<TableLayout
+
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:stretchColumns="0"
-    android:gravity="center"
-    android:paddingLeft="20dp"
-    android:paddingRight="20dp"
-    >
+    android:layout_width="match_parent"
+    android:orientation="vertical">
 
-    <TableRow>
+    <ImageView
+        android:layout_width="100dp"
+        android:layout_height="80dp"
+        android:layout_marginTop="40dp"
+        android:src="@mipmap/ic_launcher"
+        android:layout_gravity="center"/>
 
-        <EditText
-            android:id="@+id/account_et"
-            android:layout_height="wrap_content"
-            android:hint="帐号"
-            android:textSize="30dp"
-            android:inputType="number"/>
-    </TableRow>
 
-    <TableRow>
+    <EditText
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:layout_marginTop="40dp"
+        android:id="@+id/account_et"
+        android:hint="帐号"
+        android:textSize="30sp"
+        android:inputType="number"/>
+
+
 
         <EditText
             android:id="@+id/password_et"
             android:layout_height="wrap_content"
+            android:layout_width="match_parent"
             android:hint="密码"
             android:textSize="30sp"
             android:inputType="textPassword"/>
 
-    </TableRow>
+
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -37,13 +41,7 @@
         android:orientation="horizontal"
         android:layout_gravity="center">
 
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_gravity="center"
-            >
+
 
             <CheckBox
                 android:id="@+id/remb_pass"
@@ -54,17 +52,12 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="记住密码"/>
-        </LinearLayout>
 
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_gravity="center"
-            >
+
+
 
             <CheckBox
+                android:layout_marginLeft="80dp"
                 android:id="@+id/show_pass"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content" />
@@ -73,24 +66,17 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="显示密码"/>
-        </LinearLayout>
+
 
     </LinearLayout>
 
 
-    <LinearLayout
+    <Button
+        android:id="@+id/login_btn"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_gravity="center">
+        android:text="登录"
+        android:textSize="20sp" />
 
-        <Button
-            android:id="@+id/login_btn"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="登录"
-            android:textSize="20dp" />
 
-    </LinearLayout>
-</TableLayout>
+</LinearLayout>

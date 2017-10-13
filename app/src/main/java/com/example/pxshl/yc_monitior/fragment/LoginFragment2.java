@@ -8,6 +8,7 @@ import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.text.StaticLayout;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;

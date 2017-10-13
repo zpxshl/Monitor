@@ -1,31 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout
+<android.support.v4.widget.SwipeRefreshLayout
+    android:id="@+id/downFrag_srl"
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:layout_height="match_parent">
 
-    <android.support.v4.widget.SwipeRefreshLayout
-        android:id="@+id/downFrag_srl"
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-
-
         <ExpandableListView
             android:id="@+id/show_data_list_view"
+            android:dividerHeight="5dp"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
         </ExpandableListView>
 
-        <ImageView
-            android:id="@+id/empty_view"
-            android:background="@drawable/tusiji"
+        <TextView
+            android:id="@+id/downFrag_empty_tv"
             android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:textSize="20sp"
+            android:text="请您下拉刷新~"/>
 
-    </android.support.v4.widget.SwipeRefreshLayout>
+    </FrameLayout>
 
-
-
-</FrameLayout>
+</android.support.v4.widget.SwipeRefreshLayout>

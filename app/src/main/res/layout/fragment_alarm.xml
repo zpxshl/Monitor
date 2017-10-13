@@ -1,27 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical" android:layout_width="match_parent"
+<android.support.v4.widget.SwipeRefreshLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/alarm_frag_srl"
+    android:layout_width="match_parent"
     android:layout_height="match_parent">
 
 
-    <TextView
-        android:id="@+id/frag_alarm_text"
-        android:text="警报图片"
-        android:gravity="center"
-        android:textSize="30sp"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
-
-
-    <ExpandableListView
-        android:id="@+id/frag_alarm_listView"
-        android:dividerHeight="5dp"
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
-    </ExpandableListView>
+
+        <ExpandableListView
+            android:id="@+id/frag_alarm_listView"
+            android:dividerHeight="5dp"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+        </ExpandableListView>
+
+        <TextView
+            android:id="@+id/alarmFrag_empty_tv"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:textSize="20sp"
+            android:text="请您下拉刷新~"/>
+
+
+    </FrameLayout>
 
 
 
 
 
-</LinearLayout>
+
+
+</android.support.v4.widget.SwipeRefreshLayout>

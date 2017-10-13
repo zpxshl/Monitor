@@ -211,7 +211,7 @@ public class WifiActivity extends AppCompatActivity {
                 OutputStream os;
                 Socket socket = null;
                 try {
-                    socket = new Socket(Data.MONITOR_WIFI_IP,Data.MONITOR_WIFI_PORT);
+                    socket = new Socket(Data.MONITOR_WIFI_IP,Data.MONITOR_PORT);
                     os = socket.getOutputStream();
                     byte[] buffer = (msg).getBytes();
                     os.write(buffer);

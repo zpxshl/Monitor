@@ -31,10 +31,20 @@ public class UdpTool {
                     for (int i = 0 ;i < 3 ;i++){
                         dSocket.send(dPacket);
                     }
-                    callBack.onFinish();
+
+                    if (callBack != null){
+                        if (dSocket != null){
+                            dSocket.close();
+                        }
+                        callBack.onFinish();
+                    }
+
                 }catch (Exception e){
                     e.printStackTrace();
-                    callBack.onError();
+                    if (callBack != null){
+                        callBack.onError();
+                    }
+
                 }finally {
                     if (dSocket != null){
                         dSocket.close();
@@ -45,39 +55,4 @@ public class UdpTool {
 
     }
 
-
-    //通过UDP广播判断是否与监控器处于同一局域网
-    public static synchronized void UdpBroadCast(final RequestCallBack callBack) {
-
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                DatagramSocket dSocket = null;
-                DatagramPacket dPacket = null;
-                try {
-                    String msg = "Monitor are you here";
-                    dSocket = new DatagramSocket();
-                    dPacket = new DatagramPacket(msg.getBytes(),msg.length(), InetAddress.getByName("255.255.255.255"),Data.MONITOR_WIFI_PORT);
-                    dSocket.send(dPacket);
-
-                    dSocket.setSoTimeout(6000);
-                    dSocket.receive(dPacket);
-
-                    String response = new String(dPacket.getData(),dPacket.getOffset(),dPacket.getLength());
-
-                    if (response.contains("yes")){
-                        callBack.onFinish(response.substring(response.indexOf("ip") + 3));
-                    }
-
-                }catch (Exception e){
-                    e.printStackTrace();
-                    callBack.onError();
-                }finally {
-                    if (dSocket != null){
-                        dSocket.close();
-                    }
-                }
-            }
-        }).start();
-    }
 }

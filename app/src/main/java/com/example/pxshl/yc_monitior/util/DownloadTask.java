@@ -37,7 +37,7 @@ public class DownloadTask extends Thread {
             OutputStream os = null;
             BufferedInputStream in = null;
             // 下载是按天数分类，一天为一个文件夹，方便用户分时间段查看
-            File file = new File(DownloadService.DOWNLOAD_PATH + mFileInfo.getFileName().split("/")[0], mFileInfo.getFileName().split("/")[1].replace('_',':'));
+            File file = new File(Data.DL_VIDEO_PATH + mFileInfo.getFileName().split("/")[0], mFileInfo.getFileName().split("/")[1]);
             RandomAccessFile raf = null;
             Intent intent = new Intent(DownloadService.UPDATE);
 
@@ -107,7 +107,7 @@ public class DownloadTask extends Thread {
 
 
         private void downloadFail(){
-            File file = new File(DownloadService.DOWNLOAD_PATH, mFileInfo.getFileName());
+            File file = new File(Data.DL_VIDEO_PATH, mFileInfo.getFileName());
             if (file.exists()) {
                 file.delete();
             }

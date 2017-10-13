@@ -34,8 +34,7 @@ public class DownloadService extends Service {
     public static final String FAIL = "FAIL";
     public static final String FINISH = "FINISH";
     //下载的文件保存路径
-    public static final String DOWNLOAD_PATH =
-            Environment.getExternalStorageDirectory().getAbsolutePath() + "/monitor_downloads/";
+
 
     //下载任务类的集合
     private Map<Integer, DownloadTask> mTasks = new LinkedHashMap<>();
@@ -84,7 +83,7 @@ public class DownloadService extends Service {
                 RandomAccessFile raf = null;
                 fileInfo.setLength(fileSize);
 
-                File dir = new File(DOWNLOAD_PATH + fileInfo.getFileName().split("/")[0]);
+                File dir = new File(Data.DL_VIDEO_PATH + fileInfo.getFileName().split("/")[0]);
                 if (!dir.exists()) {
                     dir.mkdirs();
                 }

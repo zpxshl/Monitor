@@ -7,10 +7,11 @@
         android:id="@+id/account_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textSize="30sp"
+        android:text="登陆"
         android:gravity="center"
-        android:layout_gravity="center"
-        android:background="@drawable/oval" />
+        android:textSize="33sp"
+        android:layout_marginTop="66dp"/>
+
 
     <LinearLayout
         android:layout_marginTop="44dp"

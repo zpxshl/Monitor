@@ -69,8 +69,7 @@ public class Tools {
                File[] files = folder.listFiles();
                if (files != null){
                    for (File file:files){
-
-                       fileList.add(folder.getName() + "/" + file.getName().replace(':','_'));
+                       fileList.add(folder.getName() + "/" + file.getName());
                    }
                }
            }
