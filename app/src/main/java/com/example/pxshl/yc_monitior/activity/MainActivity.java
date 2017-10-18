@@ -72,6 +72,7 @@ public class MainActivity extends AppCompatActivity{
             Data.isLogin = preferences.getBoolean("isLogin",false);
             Data.account = preferences.getString("account","");
             Data.password = preferences.getString("password","");
+            Data.alarm_sensitivity = preferences.getInt("alarm_sensitivity",-1);
 
             if (!Data.isLogin){
                 Intent intent = new Intent(this,LoginActivity.class);

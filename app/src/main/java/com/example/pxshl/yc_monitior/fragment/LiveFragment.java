@@ -139,7 +139,7 @@ public class LiveFragment extends Fragment {
 
         isRunning = true;
 
-        new TcpTool().connect(Data.START_PLAY + " " + Data.account + " " + Tools.pwdToMd5(Data.password),new RequestCallBack() {
+        new TcpTool(Data.SERVER_IP,Data.SERVER_PORT1).connect(Data.START_PLAY + " " + Data.account + " " + Tools.pwdToMd5(Data.password),new RequestCallBack() {
             @Override
             public void onFinish(String response) {
 

@@ -143,7 +143,7 @@ public class DownLoadFragment extends Fragment {
     }
 
     private void loadFileList() {
-        new TcpTool().connect(Data.LIST_FILE + " " + Data.account + " " + Tools.pwdToMd5(Data.password),new RequestCallBack() {
+        new TcpTool(Data.SERVER_IP,Data.SERVER_PORT1).connect(Data.LIST_FILE + " " + Data.account + " " + Tools.pwdToMd5(Data.password),new RequestCallBack() {
             @Override
             public void onFinish(String response) {
 

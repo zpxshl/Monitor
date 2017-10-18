@@ -63,7 +63,7 @@ public class DownloadService extends Service {
 
     private void initDownLoad(final FileInfo fileInfo) {
 
-          new TcpTool().connect(Data.FILE_SIZE + " " + Data.account + " " + Tools.pwdToMd5(Data.password) + " " +   fileInfo.getFileName(),new RequestCallBack() {
+          new TcpTool(Data.SERVER_IP,Data.SERVER_PORT1).connect(Data.FILE_SIZE + " " + Data.account + " " + Tools.pwdToMd5(Data.password) + " " +   fileInfo.getFileName(),new RequestCallBack() {
             @Override
             public void onFinish(String response) {
 

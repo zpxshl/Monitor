@@ -125,13 +125,15 @@ public class AlarmFragment extends Fragment {
 
     private void loadGroupsInfo() {
 
-        new TcpTool().connect(Data.ALARM + " " + Data.account + " " + Tools.pwdToMd5(Data.password), new RequestCallBack() {
+        new TcpTool(Data.SERVER_IP,Data.SERVER_PORT1).connect(Data.ALARM + " " + Data.account + " " + Tools.pwdToMd5(Data.password), new RequestCallBack() {
             @Override
             public void onFinish(String response) {
 
 
                 if (response.equals("")){
                     showMsg("出错啦，请稍后再刷新试下～");
+                }else if(response.contains("no open alarm")){
+                    showMsg("您未开启监控报警～");
                 } else if (response.contains("offline")){
                     showMsg("监控器不在线~");
                 }else if(response.contains("no photo")){
@@ -174,7 +176,7 @@ public class AlarmFragment extends Fragment {
             return;
         }
 
-        new TcpTool().connect(Data.PHOTO_DATE + " " + Data.account + " " + Tools.pwdToMd5(Data.password) + " " + date, new RequestCallBack() {
+        new TcpTool(Data.SERVER_IP,Data.SERVER_PORT1).connect(Data.PHOTO_DATE + " " + Data.account + " " + Tools.pwdToMd5(Data.password) + " " + date, new RequestCallBack() {
             @Override
             public void onFinish(String response) {
 
@@ -186,7 +188,7 @@ public class AlarmFragment extends Fragment {
                         try {
                             OutputStream os;
                             socket = new Socket(Data.SERVER_IP,
-                                    Data.SERVER_PORT);
+                                    Data.SERVER_PORT1);
                             os = socket.getOutputStream();
                             byte[] buffer = (Data.PHOTO + " " + Data.account
                                     + " " + Tools.pwdToMd5(Data.password) + " " + date + "/"+ time +  '\n').getBytes();

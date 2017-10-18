@@ -7,8 +7,10 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.support.annotation.Nullable;
 import android.text.StaticLayout;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,6 +31,7 @@ import com.example.pxshl.yc_monitior.util.Tools;
 import butterknife.ButterKnife;
 
 import static android.content.Context.MODE_PRIVATE;
+import static android.content.Context.NETWORK_STATS_SERVICE;
 
 /**
  * Created by pxshl on 2017/7/28.
@@ -37,6 +40,7 @@ import static android.content.Context.MODE_PRIVATE;
 public class LoginFragment2 extends Fragment {
 
     private Activity mActivity;
+    private String phone_number;
 
     @Override
     public void onAttach(Context context) {
@@ -52,7 +56,7 @@ public class LoginFragment2 extends Fragment {
 
     @Nullable
     @Override
-    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, final Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_login2,null);
         ButterKnife.bind(this,view);
 
@@ -89,19 +93,20 @@ public class LoginFragment2 extends Fragment {
                 new_pwd1_et.setInputType(EditorInfo.TYPE_TEXT_VARIATION_PASSWORD);
                 new_pwd2_et.setInputType(EditorInfo.TYPE_TEXT_VARIATION_PASSWORD);
 
-                final AlertDialog dialog = new AlertDialog.Builder(getActivity()).setTitle("修改密码").setView(layout)
+                final AlertDialog dialog_change_pwd = new AlertDialog.Builder(getActivity()).setTitle("修改密码").setView(layout)
                         .setPositiveButton("确定", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
                               //不操作 由下面代码监听点击事件（为了拦截dialog本身的事件）
+                                //效果是，点确定不会关闭对话框
                             }
                         })
                         .setNegativeButton("取消", null).setCancelable(false).create();
 
-                dialog.show();
+                dialog_change_pwd.show();
 
-                if (dialog.getButton(AlertDialog.BUTTON_POSITIVE) != null){
-                    dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
+                if (dialog_change_pwd.getButton(AlertDialog.BUTTON_POSITIVE) != null){
+                    dialog_change_pwd.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
                             String old_pwd = old_pwd_et.getText().toString();
@@ -116,10 +121,10 @@ public class LoginFragment2 extends Fragment {
                                     if (new_pwd1.equals(new_pwd2)){
                                         //向服务器发送修改密码命令
 
-                                        new TcpTool().connect(Data.CHANGE_PASSWORD + " " + Data.account + " " + Tools.pwdToMd5(Data.password) + " " + new_pwd1,new RequestCallBack() {
+                                        new TcpTool(Data.SERVER_IP,Data.MONITOR_PORT).connect(Data.CHANGE_PASSWORD + " " + Data.account + " " + Tools.pwdToMd5(Data.password) + " " + new_pwd1,new RequestCallBack() {
                                             @Override
                                             public void onFinish(String response) {
-                                                dialog.cancel();
+                                                dialog_change_pwd.cancel();
                                                 if (response.equals("ok")){
                                                     runOnUIThreadToast("修改密码成功,请重新登陆");
 
@@ -150,7 +155,7 @@ public class LoginFragment2 extends Fragment {
 
                                             @Override
                                             public void onError() {
-                                                dialog.cancel();
+                                                dialog_change_pwd.cancel();
                                                 runOnUIThreadToast("很抱歉，修改密码错误，请稍后重试");
                                             }
                                         });
@@ -168,7 +173,121 @@ public class LoginFragment2 extends Fragment {
             }
         });
 
+        Button bind_phone = (Button) view.findViewById(R.id.bind_phone);
+        bind_phone.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                View layout = getActivity().getLayoutInflater().inflate(R.layout.dialog_bind_phone,null);
+                final EditText captcha = (EditText) layout.findViewById(R.id.et_captcha);
+                final EditText phone = (EditText) layout.findViewById(R.id.et_phone);
+                final Button send = (Button) layout.findViewById(R.id.btn_send_CAPTCHA);
+
+
+
+                //倒计时控件
+                final CountDownTimer timer =  new CountDownTimer(60000, 1000) {
+                    @Override
+                    public void onTick(long millisUntilFinished) {
+                        send.setText("重新发送： " + millisUntilFinished/1000 + "秒");
+                    }
+
+                    @Override
+                    public void onFinish() {
+                        send.setText("发送验证码");
+                        send.setFocusable(true);
+                    }
+                };
+
+                send.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        phone_number = phone.getText().toString();
+                        Log.e("phone_number.length",phone_number.length() + "");
+                        if (phone_number.length()  != 11){
+                            Toast.makeText(getContext(),"请输入正确的手机号码",Toast.LENGTH_SHORT).show();
+                        }else {
+                            new TcpTool(Data.SERVER_IP,Data.SERVER_PORT2).connect(Data.SEND_PHONE + " " + Data.account_msg + " " + phone_number,null);
+                            send.setFocusable(false);
+                            timer.start();
+                        }
+                    }
+                });
+
+                final AlertDialog dialog_bind = new AlertDialog.Builder(getActivity()).setTitle("验证手机号码").setView(layout)
+                        .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                //不操作 由下面代码监听点击事件（为了拦截dialog本身的事件）
+                            }
+                        })
+                        .setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                timer.cancel();
+                            }
+                        }).setCancelable(false).create();
+
+                dialog_bind.show();
+
+                if (dialog_bind.getButton(AlertDialog.BUTTON_POSITIVE) != null){
+                    dialog_bind.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            String captcha_number = captcha.getText().toString();
+                            if (captcha.equals("")){
+                                Toast.makeText(getContext(),"请输入验证码",Toast.LENGTH_SHORT).show();
+                            }else {
+                                new TcpTool(Data.SERVER_IP,Data.SERVER_PORT2).connect(Data.CAPTCHA + " " + Data.account_msg + " " + phone_number + captcha_number, new RequestCallBack() {
+                                    @Override
+                                    public void onFinish(String response) {
+                                        if (response.contains("true")){
+                                            showMsg("验证成功");
+
+                                            timer.cancel();
+                                            if (mActivity != null){
+                                                mActivity.runOnUiThread(new Runnable() {
+                                                    @Override
+                                                    public void run() {
+                                                        dialog_bind.cancel();
+                                                    }
+                                                });
+                                            }
+
+                                        }else {
+                                            showMsg("验证码错误，请输入正确的验证码");
+                                        }
+
+
+
+                                    }
+
+                                    @Override
+                                    public void onError() {
+                                        showMsg("网络异常，请稍后在试");
+                                    }
+                                });
+                            }
+                        }
+                    });
+                }
+            }
+        });
+
+
+
         return view;
+    }
+
+    private void showMsg(final String msg) {
+        if (mActivity != null){
+            mActivity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(getContext(),msg,Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
     }
 
     private void runOnUIThreadToast(final String msg){

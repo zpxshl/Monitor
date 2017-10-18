@@ -42,7 +42,7 @@ public class DownloadTask extends Thread {
             Intent intent = new Intent(DownloadService.UPDATE);
 
             try {
-                mSocket = new Socket(Data.SERVER_IP, Data.SERVER_PORT);
+                mSocket = new Socket(Data.SERVER_IP, Data.SERVER_PORT1);
                 //输出
                 os = mSocket.getOutputStream();
                 byte[] out_buff = (Data.DOWNLOAD + " " + Data.account + " " + Tools.pwdToMd5(Data.password) + " " + mFileInfo.getFileName() + '\n').getBytes();

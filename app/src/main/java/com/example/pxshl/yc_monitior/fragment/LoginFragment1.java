@@ -103,7 +103,7 @@ public class LoginFragment1 extends Fragment{
                         pd.setMessage("正在验证帐号密码，请稍后......");
                         pd.show();
 
-                        new TcpTool().connect(Data.LOGIN + " " +  account + " " + Tools.pwdToMd5(password),new RequestCallBack() {
+                        new TcpTool(Data.SERVER_IP,Data.SERVER_PORT1).connect(Data.LOGIN + " " +  account + " " + Tools.pwdToMd5(password),new RequestCallBack() {
 
                             String msg = "";
 
