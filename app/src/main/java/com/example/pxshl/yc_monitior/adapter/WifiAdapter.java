@@ -10,6 +10,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.TextView;
 
@@ -23,7 +24,7 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 
 /**
- * Created by pxshl on 2017/7/29.
+ * wifiActivity界面对应的适配器
  */
 
 public class WifiAdapter extends RecyclerView.Adapter {
@@ -75,7 +76,7 @@ public class WifiAdapter extends RecyclerView.Adapter {
                         @Override
                         public void onClick(DialogInterface dialogInterface, int i) {
                          String msg=  mDataList.get(position).SSID + " " +  editText.getText().toString();
-                            ((WifiActivity)(mContext)).sendToMonitor(msg);
+                            ((WifiActivity)(mContext)).sendToMonitor(msg); //发送密码
                         }
                     })
                     .setNegativeButton("取消",null).show();

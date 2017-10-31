@@ -1,12 +1,15 @@
 package com.example.pxshl.yc_monitior.fragment;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.support.annotation.Nullable;
 import android.text.InputType;
 import android.view.LayoutInflater;
@@ -26,10 +29,12 @@ import com.example.pxshl.yc_monitior.net.tcp.TcpTool;
 import com.example.pxshl.yc_monitior.util.Data;
 import com.example.pxshl.yc_monitior.util.Tools;
 
+import javax.net.ssl.SSLEngine;
+
 import static android.content.Context.MODE_PRIVATE;
 
 /**
- * Created by pxshl on 2017/7/28.
+ * 登陆界面
  */
 
 public class LoginFragment1 extends Fragment{
@@ -40,7 +45,6 @@ public class LoginFragment1 extends Fragment{
     private ProgressDialog pd;
     private View mView;
     private Activity mActivity;
-
 
 
     @Override
@@ -116,6 +120,7 @@ public class LoginFragment1 extends Fragment{
                                 if (response.equals("")){
                                     showMsg("服务器异常，请稍后重试");
                                 } else if (response.contains("true")) {
+
                                     Data.isLogin = true;
                                     Data.account = account;
                                     Data.password = password;
@@ -154,6 +159,122 @@ public class LoginFragment1 extends Fragment{
         }
 
 
+        ((Button)(mView.findViewById(R.id.btn_forget_pwd))).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                View layout = getActivity().getLayoutInflater().inflate(R.layout.dialog_forget_pwd,null);
+                final EditText account = (EditText) layout.findViewById(R.id.et_account);
+                final EditText new1_pwd = (EditText) layout.findViewById(R.id.et_new1_pwd);
+                final EditText new2_pwd = (EditText) layout.findViewById(R.id.et_new2_pwd);
+                final EditText phone = (EditText) layout.findViewById(R.id.et_phone);
+                final EditText captcha = (EditText) layout.findViewById(R.id.et_captcha);
+                final Button send = (Button) layout.findViewById(R.id.btn_send_CAPTCHA);
+
+
+                //倒计时控件
+                final CountDownTimer timer =  new CountDownTimer(60000, 1000) {
+                    @Override
+                    public void onTick(long millisUntilFinished) {
+                        send.setText("重新发送： " + millisUntilFinished/1000 + "秒");
+                    }
+
+                    @Override
+                    public void onFinish() {
+                        send.setText("发送验证码");
+                        send.setFocusable(true);
+                    }
+                };
+
+
+                send.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+
+                        if (account.getText().toString().equals("")){
+                            Toast.makeText(getContext(),"请输入帐号",Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+
+                       if (!new1_pwd.getText().toString().equals(new2_pwd.getText().toString())){
+                           Toast.makeText(getContext(),"新密码不一致，请重新输入",Toast.LENGTH_SHORT).show();
+                           return;
+                       }
+
+                       if (phone.getText().toString().length() != 11){
+                           Toast.makeText(getContext(),"请输入正确的手机号码",Toast.LENGTH_SHORT).show();
+                           return;
+                       }
+
+                        new TcpTool(Data.SERVER_IP,Data.SERVER_PORT2).connect(Data.SEND_PHONE + " " + account.getText().toString() + " " + phone.getText().toString(),null);
+                        send.setFocusable(false);
+                        timer.start();
+
+                    }
+                });
+
+                final AlertDialog dialog_forget = new AlertDialog.Builder(getActivity()).setTitle("找回密码").setView(layout)
+                        .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                //不操作 由下面代码监听点击事件（为了拦截dialog本身的事件）
+                            }
+                        })
+                        .setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                timer.cancel();
+                            }
+                        }).setCancelable(false).create();
+
+                dialog_forget.show();
+
+                if (dialog_forget.getButton(AlertDialog.BUTTON_POSITIVE) != null){
+                    dialog_forget.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            String captcha_number = captcha.getText().toString();
+                            if (captcha.equals("")){
+                                Toast.makeText(getContext(),"请输入验证码",Toast.LENGTH_SHORT).show();
+                            }else {
+                                new TcpTool(Data.SERVER_IP,Data.SERVER_PORT2).connect(Data.CHANGE_PWD_BY_CAPTCHA + " " + account.getText().toString() + " " + new1_pwd.getText().toString() +  " " + captcha_number, new RequestCallBack() {
+                                    @Override
+                                    public void onFinish(String response) {
+                                        if (response.equals("")){
+                                            showMsg("服务器异常，请稍后在尝试");
+                                        }else if (response.contains("true")){
+                                            showMsg("验证成功");
+
+                                            timer.cancel();
+                                            if (mActivity != null){
+                                                mActivity.runOnUiThread(new Runnable() {
+                                                    @Override
+                                                    public void run() {
+                                                        dialog_forget.cancel();
+                                                    }
+                                                });
+                                            }
+
+                                        }else {
+                                            showMsg("验证码错误，请输入正确的验证码");
+                                        }
+
+
+
+                                    }
+
+                                    @Override
+                                    public void onError() {
+                                        showMsg("网络异常，请稍后在试");
+                                    }
+                                });
+                            }
+                        }
+                    });
+                }
+
+            }
+        });
 
 
         return mView;

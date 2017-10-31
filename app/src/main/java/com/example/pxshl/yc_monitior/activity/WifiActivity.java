@@ -37,7 +37,7 @@ import static android.R.attr.enabled;
 
 
 /**
- * Created by pxshl on 2017/7/29.
+ * 该activity负责将wifi密码发送给监控器
  */
 
 public class WifiActivity extends AppCompatActivity {
@@ -76,12 +76,12 @@ public class WifiActivity extends AppCompatActivity {
                 return;
             }
 
-            if (connectMonitorWifi(MonitorWifiName)){
+            if (connectMonitorWifi(MonitorWifiName)){ //让手机去连接监控器的wifi
 
                 new Thread(new Runnable() {    //子线程轮询是否连接上指定wifi
                     @Override
                     public void run() {
-                        int count = 5;
+                        int count = 8;   //判断时间为 <8秒
                         while(count > 0){
 
                             if (isConnectMonitor()){
@@ -89,6 +89,7 @@ public class WifiActivity extends AppCompatActivity {
                             }
 
                             count--;
+
                             try {
                                 Thread.sleep(1000);
                             }catch (Exception e){
@@ -124,8 +125,11 @@ public class WifiActivity extends AppCompatActivity {
     }
 
 
-
-
+    /**
+     *
+     * @param SSID   要判断时候存在的wifi的SSID
+     * @return  ture表示该SSID对应的wifi在附近
+     */
     private boolean hasMonitorWifi(String SSID){
         //先刷新wifi列表
         List<ScanResult> results = mWifiManager.getScanResults();
@@ -148,6 +152,7 @@ public class WifiActivity extends AppCompatActivity {
                     @Override
                     public void run() {
 
+                        //显示wifi列表
                         mAdapter = new WifiAdapter(WifiActivity.this, mWifiManager.getScanResults());
                         wifiList.setLayoutManager(new LinearLayoutManager(WifiActivity.this));
                         wifiList.setAdapter(mAdapter);
@@ -160,6 +165,7 @@ public class WifiActivity extends AppCompatActivity {
         return false;
     }
 
+    //连接SSID对应的wifi
     private boolean connectMonitorWifi(String SSID) {
 
         List<WifiConfiguration> wifiConfigurationList = mWifiManager.getConfiguredNetworks();
@@ -217,13 +223,15 @@ public class WifiActivity extends AppCompatActivity {
                     os.write(buffer);
                     os.flush();
 
-
+                    String msg;
 
                     if (isMonitorConnect()){
-
+                        msg = "wifi密码错误，请重新输入";
                     }else {
-
+                        msg = "恭喜您，监控器已经连接上wifi啦";
                     }
+
+                    Toast.makeText(WifiActivity.this,msg,Toast.LENGTH_SHORT).show();
                 }
                 catch (Exception e) {
                     e.printStackTrace();
@@ -240,18 +248,19 @@ public class WifiActivity extends AppCompatActivity {
         }).start();
     }
 
-    private boolean isMonitorConnect() throws InterruptedException{ //通过判断监控器有没有重新发出wifi
+    //通过判断监控器有没有重新发出wifi
+    private boolean isMonitorConnect() throws InterruptedException{
 
-        for (int i = 15 ; i > 0 ;i--){
+        for (int i = 12 ; i > 0 ;i--){    //12秒内 如果监控器没有重新发出wifi，则可以认为它已经连接上指定wifi
             for (ScanResult result : mWifiManager.getScanResults()){
                 if (result.SSID.contains(MonitorWifiName)){
                     return false;
                 }
             }
-            Thread.sleep(4000);
+
+            Thread.sleep(1000);
         }
         return true;
-
     }
 
 

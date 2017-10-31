@@ -12,10 +12,10 @@ import com.example.pxshl.yc_monitior.fragment.LoginFragment1;
 import com.example.pxshl.yc_monitior.fragment.LoginFragment2;
 import com.example.pxshl.yc_monitior.util.Data;
 
-/**
- *登录的activity
- */
 
+/**
+ * 登陆使用的Activity
+ */
 public class LoginActivity extends AppCompatActivity {
 
 
@@ -27,6 +27,9 @@ public class LoginActivity extends AppCompatActivity {
         changeFragment();
     }
 
+    /**
+     * 根据时候登陆，切换不同的界面
+     */
     public void changeFragment(){
         FragmentManager manager = getFragmentManager();
         FragmentTransaction transaction = manager.beginTransaction();

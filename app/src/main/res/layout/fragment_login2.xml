@@ -45,6 +45,7 @@
     </LinearLayout>
 
 
+
     <Button
         android:id="@+id/bind_phone"
         android:layout_width="match_parent"

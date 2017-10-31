@@ -1,6 +1,8 @@
 package com.example.pxshl.yc_monitior.net.udp;
 
 
+import android.util.Log;
+
 import com.example.pxshl.yc_monitior.inyerface.RequestCallBack;
 import com.example.pxshl.yc_monitior.inyerface.SendCallBack;
 import com.example.pxshl.yc_monitior.util.Data;
@@ -32,10 +34,14 @@ public class UdpTool {
                         dSocket.send(dPacket);
                     }
 
+
+                    Log.e("UDP SEND " , Data.UDP_PORT + " " + msg);
+
                     if (callBack != null){
                         if (dSocket != null){
-                            dSocket.close();
+                            dSocket.close();  //先关闭 否则会影响callBack.onFinish()里面的代码
                         }
+                        Thread.sleep(60);   //让该Socket占用的端口能及时释放
                         callBack.onFinish();
                     }
 

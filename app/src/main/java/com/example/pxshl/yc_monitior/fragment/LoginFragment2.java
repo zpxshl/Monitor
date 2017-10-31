@@ -31,10 +31,10 @@ import com.example.pxshl.yc_monitior.util.Tools;
 import butterknife.ButterKnife;
 
 import static android.content.Context.MODE_PRIVATE;
-import static android.content.Context.NETWORK_STATS_SERVICE;
+
 
 /**
- * Created by pxshl on 2017/7/28.
+ * 登陆界面2
  */
 
 public class LoginFragment2 extends Fragment {
@@ -45,6 +45,12 @@ public class LoginFragment2 extends Fragment {
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
+        mActivity = getActivity();
+    }
+
+    @Override   //兼容低版本安卓系统
+    public void onAttach(Activity activity){
+        super.onAttach(activity);
         mActivity = getActivity();
     }
 
@@ -114,7 +120,7 @@ public class LoginFragment2 extends Fragment {
                             String new_pwd2 = new_pwd2_et.getText().toString();
 
                             if (old_pwd.equals("") || new_pwd1.equals("") || new_pwd2.equals("")){
-                                runOnUIThreadToast("请输入三行完整的密码");
+                                showMsg("请输入三行完整的密码");
                                 return;
                             }else {
                                 if (old_pwd.equals(Data.password)){
@@ -126,7 +132,7 @@ public class LoginFragment2 extends Fragment {
                                             public void onFinish(String response) {
                                                 dialog_change_pwd.cancel();
                                                 if (response.equals("ok")){
-                                                    runOnUIThreadToast("修改密码成功,请重新登陆");
+                                                    showMsg("修改密码成功,请重新登陆");
 
                                                     //清除原本储存的数据
                                                     SharedPreferences preferences = getContext().getSharedPreferences("properties", MODE_PRIVATE);
@@ -149,22 +155,22 @@ public class LoginFragment2 extends Fragment {
                                                     }
 
                                                 }else {
-                                                    runOnUIThreadToast("很抱歉，服务器故障，修改密码失败，请稍后重试");
+                                                    showMsg("很抱歉，服务器故障，修改密码失败，请稍后重试");
                                                 }
                                             }
 
                                             @Override
                                             public void onError() {
                                                 dialog_change_pwd.cancel();
-                                                runOnUIThreadToast("很抱歉，修改密码错误，请稍后重试");
+                                                showMsg("很抱歉，修改密码错误，请稍后重试");
                                             }
                                         });
 
                                     }else {
-                                        runOnUIThreadToast("两次输入的新密码不一致，请核对后重新输入");
+                                        showMsg("两次输入的新密码不一致，请核对后重新输入");
                                     }
                                 }else {
-                                    runOnUIThreadToast("原密码输入错误，请重新输入");
+                                    showMsg("原密码输入错误，请重新输入");
                                 }
                             }
                         }
@@ -173,6 +179,7 @@ public class LoginFragment2 extends Fragment {
             }
         });
 
+        //绑定手机号码
         Button bind_phone = (Button) view.findViewById(R.id.bind_phone);
         bind_phone.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -203,18 +210,18 @@ public class LoginFragment2 extends Fragment {
                     @Override
                     public void onClick(View v) {
                         phone_number = phone.getText().toString();
-                        Log.e("phone_number.length",phone_number.length() + "");
-                        if (phone_number.length()  != 11){
+                        if (phone_number.length() != 11){
                             Toast.makeText(getContext(),"请输入正确的手机号码",Toast.LENGTH_SHORT).show();
                         }else {
-                            new TcpTool(Data.SERVER_IP,Data.SERVER_PORT2).connect(Data.SEND_PHONE + " " + Data.account_msg + " " + phone_number,null);
+
+                            new TcpTool(Data.SERVER_IP,Data.SERVER_PORT2).connect(Data.SEND_PHONE + " " + Data.account + " " + Tools.pwdToMd5(Data.password) + " " + phone_number,null);
                             send.setFocusable(false);
                             timer.start();
                         }
                     }
                 });
 
-                final AlertDialog dialog_bind = new AlertDialog.Builder(getActivity()).setTitle("验证手机号码").setView(layout)
+                final AlertDialog dialog_bind = new AlertDialog.Builder(getActivity()).setTitle("绑定手机号码").setView(layout)
                         .setPositiveButton("确定", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
@@ -238,10 +245,12 @@ public class LoginFragment2 extends Fragment {
                             if (captcha.equals("")){
                                 Toast.makeText(getContext(),"请输入验证码",Toast.LENGTH_SHORT).show();
                             }else {
-                                new TcpTool(Data.SERVER_IP,Data.SERVER_PORT2).connect(Data.CAPTCHA + " " + Data.account_msg + " " + phone_number + captcha_number, new RequestCallBack() {
+                                new TcpTool(Data.SERVER_IP,Data.SERVER_PORT2).connect(Data.CAPTCHA + " " + Data.account + " " + Tools.pwdToMd5(Data.password) + " " + phone_number + " " + captcha_number, new RequestCallBack() {
                                     @Override
                                     public void onFinish(String response) {
-                                        if (response.contains("true")){
+                                        if (response.equals("")){
+                                            showMsg("服务器异常，请稍后在尝试");
+                                        }else if (response.contains("true")){
                                             showMsg("验证成功");
 
                                             timer.cancel();
@@ -290,16 +299,5 @@ public class LoginFragment2 extends Fragment {
         }
     }
 
-    private void runOnUIThreadToast(final String msg){
-        if (mActivity == null){
-            return;
-        }else {
-            mActivity.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Toast.makeText(getContext(),msg,Toast.LENGTH_SHORT).show();
-                }
-            });
-        }
-    }
+
 }

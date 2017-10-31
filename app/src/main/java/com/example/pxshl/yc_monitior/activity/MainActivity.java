@@ -29,6 +29,10 @@ import com.example.pxshl.yc_monitior.util.Tools;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * 主活动，申请各种运行时权限，并让Alarm，Live，Download，setting四个碎片依附
+ * 通过Fragment+ViewPager+BottomNavigationView实现滑动与导航效果
+ */
 public class MainActivity extends AppCompatActivity{
 
     private List<Fragment> mList;
@@ -41,7 +45,6 @@ public class MainActivity extends AppCompatActivity{
         @Override
         public boolean onNavigationItemSelected(@NonNull MenuItem item) {
 
-
             mViewPager.setCurrentItem(item.getOrder());
             return true;
         }
@@ -52,8 +55,6 @@ public class MainActivity extends AppCompatActivity{
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-
 
         if (ContextCompat.checkSelfPermission(this, "android.permission.ACCESS_FINE_LOCATION") != PackageManager.PERMISSION_GRANTED ||
                 ContextCompat.checkSelfPermission(this,"android.permission.WRITE_EXTERNAL_STORAGE") != PackageManager.PERMISSION_GRANTED   ) {
@@ -66,15 +67,15 @@ public class MainActivity extends AppCompatActivity{
 
     private void init() {
 
-
         if (!Data.isLogin){
+            //判断是否已经登陆过（且记住密码）
             SharedPreferences preferences = getSharedPreferences("properties",MODE_PRIVATE);
             Data.isLogin = preferences.getBoolean("isLogin",false);
             Data.account = preferences.getString("account","");
             Data.password = preferences.getString("password","");
             Data.alarm_sensitivity = preferences.getInt("alarm_sensitivity",-1);
 
-            if (!Data.isLogin){
+            if (!Data.isLogin){ //如果没登陆，跳转到登陆界面
                 Intent intent = new Intent(this,LoginActivity.class);
                 startActivity(intent);
                 finish();
@@ -83,12 +84,10 @@ public class MainActivity extends AppCompatActivity{
         }
 
 
-
         mNavigation = (BottomNavigationView) findViewById(R.id.navigation);
         mNavigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
         mViewPager = (ViewPager) findViewById(R.id.viewPager);
         mList = new ArrayList<>();
-
 
         mList.add(new LiveFragment());
         mList.add(new DownLoadFragment());

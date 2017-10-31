@@ -27,7 +27,7 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 
 /**
- *ExpandableListView的适配器
+ *下载界面对应的ListView的适配器
  */
 
 public class DownLoadELVAdapter extends BaseExpandableListAdapter {
@@ -122,9 +122,7 @@ public class DownLoadELVAdapter extends BaseExpandableListAdapter {
 
         childsViewHolder.childsTv.setText((fileInfo.getFileName().split("/"))[1].split(".mp3")[0]); //将文件名显示为对用户友好的格式
         if (fileInfo.isFinish()) {
-            //如果下载完成，则将子项的背景颜色设置为蓝色，并将progressbar设置为gone，显示可以删除的按钮，并提示用户下载完成
-            //该代码存在极其诡异的BUG。。。找不到原因。。。
-  //          childsViewHolder.childsTv.setTextColor(mContext.getResources().getColor(R.color.colorPrimaryDark));
+            //如果下载完成并将progressbar设置为gone，显示可以删除的按钮，并提示用户下载完成
             childsViewHolder.progressBar.setVisibility(View.GONE);
             childsViewHolder.delBtn.setVisibility(View.VISIBLE);
         } else {
@@ -174,7 +172,7 @@ public class DownLoadELVAdapter extends BaseExpandableListAdapter {
      */
     public void update(FileInfo fileInfo) {
 
-        try {    //try语句 避免当atcivity被回收or 刷新列表后，启动时崩溃（mChildsMap.get(fileInfo.getI()).get(fileInfo.getI1())返回null）
+        try {    //try语句 避免当atcivity被回收 or 刷新列表后，启动时崩溃（mChildsMap.get(fileInfo.getI()).get(fileInfo.getI1())返回null）
             FileInfo mFileInfo =  mChildsMap.get(fileInfo.getI()).get(fileInfo.getI1());
             mFileInfo.setFinished(fileInfo.getFinished());
             mFileInfo.setLength(fileInfo.getLength());

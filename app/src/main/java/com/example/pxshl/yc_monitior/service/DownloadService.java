@@ -21,11 +21,9 @@ import java.util.Map;
 
 /**
  *后台下载
- * 下载是按天数分类，一天为一个文件夹，方便用户分时间段查看
  */
 
 public class DownloadService extends Service {
-    //有空改成枚举
     //开始下载命令
     public static final String START_DOWNLOAD = "START_DOWNLOAD";
 

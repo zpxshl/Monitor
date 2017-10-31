@@ -37,9 +37,8 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_gravity="center">
+        android:layout_height="40dp"
+        android:orientation="horizontal">
 
 
 
@@ -51,21 +50,35 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="记住密码"/>
+                android:text="记住密码" />
 
 
+        <CheckBox
+            android:id="@+id/show_pass"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="10dp" />
 
-
-            <CheckBox
-                android:layout_marginLeft="80dp"
-                android:id="@+id/show_pass"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
-
-            <TextView
+        <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="显示密码"/>
+
+        <!--为了使得Button右对齐，使用LinearLayout包起来-->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="end">
+
+            <Button
+                android:id="@+id/btn_forget_pwd"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:text="忘记密码？" />
+
+        </LinearLayout>
+
+
 
 
     </LinearLayout>
@@ -77,6 +90,9 @@
         android:layout_height="wrap_content"
         android:text="登录"
         android:textSize="20sp" />
+
+
+
 
 
 </LinearLayout>

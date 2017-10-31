@@ -15,7 +15,7 @@ import java.net.Socket;
 
 
 /**
- * Created by pxshl on 2017/7/31.
+ * 下载类
  */
 
 public class DownloadTask extends Thread {

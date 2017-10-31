@@ -39,7 +39,7 @@ import java.util.Map;
 
 
 /**
- * Created by pxshl on 17-7-26.
+ * 下载
  */
 
 public class DownLoadFragment extends Fragment {
@@ -89,6 +89,12 @@ public class DownLoadFragment extends Fragment {
         mActivity = getActivity(); //保存引用
     }
 
+    @Override   //兼容低版本安卓系统
+    public void onAttach(Activity activity){
+        super.onAttach(activity);
+        mActivity = getActivity();
+    }
+
     @Override
     public void onDetach() {
         super.onDetach();
@@ -101,9 +107,7 @@ public class DownLoadFragment extends Fragment {
         mActivity.unregisterReceiver(mReceiver);
     }
 
-    /**
-     * 初始化操作
-     */
+
     public void init() {
 
         mEmptyTv = (TextView) mView.findViewById(R.id.downFrag_empty_tv);
@@ -142,6 +146,7 @@ public class DownLoadFragment extends Fragment {
 
     }
 
+    //加载下载列表
     private void loadFileList() {
         new TcpTool(Data.SERVER_IP,Data.SERVER_PORT1).connect(Data.LIST_FILE + " " + Data.account + " " + Tools.pwdToMd5(Data.password),new RequestCallBack() {
             @Override

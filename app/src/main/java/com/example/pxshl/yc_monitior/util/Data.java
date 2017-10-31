@@ -14,17 +14,18 @@ public class Data {
     public static boolean isLogin;
     public static String account = "";
     public static String password = "";
-    public static String account_msg = account + " " + Tools.pwdToMd5(password);
+
     public volatile static int alarm_sensitivity = -1; //报警灵敏度 取自范围0-100， 0表示没开启报警功能
 
     public final static String SERVER_IP = "119.23.240.131";
-
+   // public final static String SERVER_IP = "192.168.10.56";
     public final static int SERVER_PORT1 = 8890; //默认用该端口和服务器通信（服务器要求的）
     public final static int SERVER_PORT2 = 8891;  //发送验证码时需要用到的端口
+    public final static int SERVER_PORT3 = 8892; //心跳包
     public final static String MONITOR_WIFI_IP = "172.24.1.1";
     public final static int MONITOR_PORT = 8888;   //监控器端口，用于发送广播和wifi帐号密码时需要
 
-    public  static int UDP_PORT = 20000; //初始化为20000，会根据实际情况更改
+    public transient static int UDP_PORT = 20000; //初始化为20000，会根据实际情况更改
 
     private static final String DL_PATH =   Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator +"monitor" +
             File.separator;
@@ -38,7 +39,7 @@ public class Data {
     public final static char SET_ALARM_SENSITIVITY = 'B';
     public final static char CHANGE_PASSWORD = 'C';
     public final static char START_PLAY  = 'P';
-    public final static char STOP_PLAY  = 's';
+    public final static char STOP_PLAY = 's';
     public final static char LIST_FILE  = 'l';
     public final static char FILE_SIZE  = 'S';
     public final static char DOWNLOAD  = 'D';
@@ -47,7 +48,7 @@ public class Data {
     public final static char PHOTO_DATE = 'b';
     public final static char SEND_PHONE = 'x';
     public final static char CAPTCHA = 'X';
-
-
+    public final static char CHANGE_PWD_BY_CAPTCHA = 'f';
+    public final static char HEART_BEAT = 'h';
 
 }

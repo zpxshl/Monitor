@@ -5,6 +5,27 @@
 
 
     <EditText
+        android:id="@+id/et_account"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="请输入帐号"
+        android:inputType="number"/>
+
+    <EditText
+        android:id="@+id/et_new1_pwd"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="请输入新密码"
+        android:inputType="textPassword"/>
+
+    <EditText
+        android:id="@+id/et_new2_pwd"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="请再次输入新密码"
+        android:inputType="textPassword"/>
+
+    <EditText
         android:id="@+id/et_phone"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

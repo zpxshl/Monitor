@@ -1,6 +1,7 @@
 package com.example.pxshl.yc_monitior.fragment;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -27,13 +28,31 @@ import static android.content.Context.MODE_PRIVATE;
 
 
 /**
- * Created by pxshl on 17-7-26.
+ * 设置界面
  */
 
 public class SettingsFragment extends Fragment {
 
     private Button mSetAlarm;
+    private Activity mActivity;
 
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        mActivity = getActivity();
+    }
+
+    @Override   //兼容低版本安卓系统
+    public void onAttach(Activity activity){
+        super.onAttach(activity);
+        mActivity = getActivity();
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        mActivity = null;
+    }
 
     @Nullable
     @Override
@@ -49,7 +68,7 @@ public class SettingsFragment extends Fragment {
         login.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(getActivity(), LoginActivity.class);
+                Intent intent = new Intent(mActivity, LoginActivity.class);
                 startActivity(intent);
                 getActivity().finish();
             }
@@ -58,18 +77,26 @@ public class SettingsFragment extends Fragment {
         setWifi.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(getActivity(), WifiActivity.class);
+                Intent intent = new Intent(mActivity
+                        , WifiActivity.class);
                 startActivity(intent);
             }
         });
 
+        //
         mSetAlarm.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                bar.setVisibility(View.VISIBLE);
+                if (bar.getVisibility() == View.INVISIBLE){
+                    bar.setVisibility(View.VISIBLE);
+                } else{
+                    bar.setVisibility(View.INVISIBLE);
+                }
+
             }
         });
 
+        //报警灵敏度条 默认隐藏
         bar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -87,7 +114,7 @@ public class SettingsFragment extends Fragment {
 
 
 
-                new TcpTool(Data.SERVER_IP,Data.SERVER_PORT1).send(Data.SET_ALARM_SENSITIVITY + " " + Data.account_msg + " " + progress, new SendCallBack() {
+                new TcpTool(Data.SERVER_IP,Data.SERVER_PORT1).send(Data.SET_ALARM_SENSITIVITY + " " + Data.account + " " + Tools.pwdToMd5(Data.password) + " " + progress, new SendCallBack() {
                     @Override
                     public void onFinish() {
                         Data.alarm_sensitivity = progress;
@@ -96,12 +123,12 @@ public class SettingsFragment extends Fragment {
                         editor.putInt("alarm_sensitivity", progress);
                         editor.commit();
                         bar.setVisibility(View.INVISIBLE);
-                        Toast.makeText(getContext(),"设置报警灵敏度: " + progress + " 成功",Toast.LENGTH_SHORT).show();
+                        showMsg("设置报警灵敏度: " + progress + " 成功");
                     }
 
                     @Override
                     public void onError() {
-                        Toast.makeText(getContext(),"设置报警灵敏度失败～请检查网络连接",Toast.LENGTH_SHORT).show();
+                        showMsg("设置报警灵敏度失败～请检查网络连接");
                     }
                 });
 
@@ -119,7 +146,7 @@ public class SettingsFragment extends Fragment {
         } else if(Data.alarm_sensitivity == 0){
             mSetAlarm.setText("未开启报警");
         }else {
-            mSetAlarm.setText("报警启动 灵敏度： " + Data.alarm_sensitivity + "%");
+            mSetAlarm.setText("报警运行中 灵敏度： " + Data.alarm_sensitivity + "%");
         }
 
         bar.setProgress(Data.alarm_sensitivity);
@@ -131,7 +158,7 @@ public class SettingsFragment extends Fragment {
 
     //询问服务器，该用户之前设置的报警灵敏度
     private void askSensitivity() {
-        new TcpTool(Data.SERVER_IP,Data.SERVER_PORT1).connect(Data.ASK_ALARM_SENSITIVITY + " "+ Data.account_msg, new RequestCallBack() {
+        new TcpTool(Data.SERVER_IP,Data.SERVER_PORT1).connect(Data.ASK_ALARM_SENSITIVITY + " " + Data.account + " " + Tools.pwdToMd5(Data.password), new RequestCallBack() {
             @Override
             public void onFinish(String response) {
                 int sensitivity = -1;
@@ -156,9 +183,9 @@ public class SettingsFragment extends Fragment {
                 }
 
 
-                Activity activity = getActivity();
-                if (activity != null){
-                    activity.runOnUiThread(new Runnable() {
+
+                if (mActivity != null){
+                    mActivity.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
                             if(Data.alarm_sensitivity == 0){
@@ -178,6 +205,16 @@ public class SettingsFragment extends Fragment {
         });
     }
 
+    private void showMsg(final String msg){
+        if (mActivity != null){
+            mActivity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(getContext(),msg,Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+    }
 
 
 }

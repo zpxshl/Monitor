@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Created by pxshl on 2017/9/12.
+ * 该碎片会展示报警的图片
  */
 
 public class AlarmFragment extends Fragment {
@@ -52,6 +52,12 @@ public class AlarmFragment extends Fragment {
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
+        mActivity = getActivity();
+    }
+
+    @Override   //兼容低版本安卓系统
+    public void onAttach(Activity activity){
+        super.onAttach(activity);
         mActivity = getActivity();
     }
 
@@ -169,6 +175,7 @@ public class AlarmFragment extends Fragment {
         });
     }
 
+    //加载图片
     private void loadChildsInfo(final int groupPosition){
         final String date = groupsList.get(groupPosition);
 

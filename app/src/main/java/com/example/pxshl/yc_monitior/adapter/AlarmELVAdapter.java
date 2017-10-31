@@ -24,7 +24,7 @@ import java.util.Map;
 
 
 /**
- * Created by pxshl on 17-10-2.
+ * 对应报警界面的listView的塞佩琦
  */
 
 public class AlarmELVAdapter extends BaseExpandableListAdapter{
@@ -112,6 +112,7 @@ public class AlarmELVAdapter extends BaseExpandableListAdapter{
 
         viewHolder.childIv.setImageBitmap(mChildsMap.get(groupPosition).get(childPosition).getBitmap());
 
+        //长按图片保存到手机
         convertView.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
@@ -146,6 +147,12 @@ public class AlarmELVAdapter extends BaseExpandableListAdapter{
     }
 
 
+    /**
+     *
+     * @param bitmap 图片对应的bitmap
+     * @param dir    保存的位置
+     * @param fileName  保存的文件名
+     */
     private void save_photo(Bitmap bitmap,String dir,String fileName){
         File d= new File(dir);
         if (!d.exists()){
