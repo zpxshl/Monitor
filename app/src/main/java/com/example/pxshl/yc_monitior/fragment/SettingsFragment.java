@@ -83,7 +83,9 @@ public class SettingsFragment extends Fragment {
             }
         });
 
-        //
+
+
+
         mSetAlarm.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -112,8 +114,6 @@ public class SettingsFragment extends Fragment {
             public void onStopTrackingTouch(SeekBar seekBar) {
                 final int progress = seekBar.getProgress();
 
-
-
                 new TcpTool(Data.SERVER_IP,Data.SERVER_PORT1).send(Data.SET_ALARM_SENSITIVITY + " " + Data.account + " " + Tools.pwdToMd5(Data.password) + " " + progress, new SendCallBack() {
                     @Override
                     public void onFinish() {
@@ -122,8 +122,17 @@ public class SettingsFragment extends Fragment {
                         SharedPreferences.Editor editor = preferences.edit();
                         editor.putInt("alarm_sensitivity", progress);
                         editor.commit();
-                        bar.setVisibility(View.INVISIBLE);
+
                         showMsg("设置报警灵敏度: " + progress + " 成功");
+
+                        if (mActivity != null){
+                            mActivity.runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    bar.setVisibility(View.INVISIBLE);
+                                }
+                            });
+                        }
                     }
 
                     @Override
@@ -138,72 +147,20 @@ public class SettingsFragment extends Fragment {
         });
 
 
-
         login.setText(Data.account + " 欢迎您");
 
-        if (Data.alarm_sensitivity == -1){
-           askSensitivity();
-        } else if(Data.alarm_sensitivity == 0){
+       if(Data.alarm_sensitivity == 0){
             mSetAlarm.setText("未开启报警");
         }else {
-            mSetAlarm.setText("报警运行中 灵敏度： " + Data.alarm_sensitivity + "%");
+           mSetAlarm.setText("报警灵敏度: " + Data.alarm_sensitivity + "%");
         }
 
         bar.setProgress(Data.alarm_sensitivity);
-
 
         return view;
     }
 
 
-    //询问服务器，该用户之前设置的报警灵敏度
-    private void askSensitivity() {
-        new TcpTool(Data.SERVER_IP,Data.SERVER_PORT1).connect(Data.ASK_ALARM_SENSITIVITY + " " + Data.account + " " + Tools.pwdToMd5(Data.password), new RequestCallBack() {
-            @Override
-            public void onFinish(String response) {
-                int sensitivity = -1;
-                try {
-                    sensitivity  = Integer.parseInt(response.trim());
-                }catch (NumberFormatException e){
-                    e.printStackTrace();
-                    return;
-                }
-
-                //防止由于服务器返回错误的数据
-                if (sensitivity >= 0 && Data.alarm_sensitivity <= 100){
-                    Data.alarm_sensitivity = sensitivity;
-
-                    SharedPreferences preferences = getContext().getSharedPreferences("properties", MODE_PRIVATE);
-                    SharedPreferences.Editor editor = preferences.edit();
-                    editor.putInt("alarm_sensitivity", sensitivity);
-                    editor.commit();
-                }else {
-                    Log.e("settingFrag", "sensitivity =  " + sensitivity);
-                    return;
-                }
-
-
-
-                if (mActivity != null){
-                    mActivity.runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            if(Data.alarm_sensitivity == 0){
-                                mSetAlarm.setText("未开启报警");
-                            }else {
-                                mSetAlarm.setText("报警启动 灵敏度： " + Data.alarm_sensitivity + "%");
-                            }
-                        }
-                    });
-                }
-            }
-
-            @Override
-            public void onError() {
-
-            }
-        });
-    }
 
     private void showMsg(final String msg){
         if (mActivity != null){

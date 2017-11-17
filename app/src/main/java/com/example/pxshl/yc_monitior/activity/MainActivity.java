@@ -74,6 +74,7 @@ public class MainActivity extends AppCompatActivity{
             Data.account = preferences.getString("account","");
             Data.password = preferences.getString("password","");
             Data.alarm_sensitivity = preferences.getInt("alarm_sensitivity",-1);
+            Data.phone_num = preferences.getString("phone_num","");
 
             if (!Data.isLogin){ //如果没登陆，跳转到登陆界面
                 Intent intent = new Intent(this,LoginActivity.class);

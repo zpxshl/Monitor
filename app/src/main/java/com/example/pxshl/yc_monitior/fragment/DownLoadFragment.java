@@ -253,7 +253,7 @@ public class DownLoadFragment extends Fragment {
 
                     mp4Intent.putExtra("oneshot", 0);
                     mp4Intent.putExtra("configchange", 0);
-                    mp4Intent.setDataAndType(uri, "video/mp4");
+                    mp4Intent.setDataAndType(uri, "video/*");
                     startActivity(mp4Intent);
 
                 }
@@ -275,11 +275,15 @@ public class DownLoadFragment extends Fragment {
             mAdapter.update(fileInfo);
 
             String action = intent.getAction();
-            if (action.equals(DownloadService.FAIL)){
-                Toast.makeText(getContext(),fileInfo.getFileName() + " 下载失败，请重试",Toast.LENGTH_SHORT).show();
-            }else if (action.equals(DownloadService.FINISH)){
-                Toast.makeText(getContext(),fileInfo.getFileName() + " 下载成功",Toast.LENGTH_SHORT).show();
+
+            if (action != null){
+                if (action.equals(DownloadService.FAIL)){
+                    Toast.makeText(getContext(),fileInfo.getFileName() + " 下载失败，请重试",Toast.LENGTH_SHORT).show();
+                }else if (action.equals(DownloadService.FINISH)){
+                    Toast.makeText(getContext(),fileInfo.getFileName() + " 下载成功",Toast.LENGTH_SHORT).show();
+                }
             }
+
 
         }
     }

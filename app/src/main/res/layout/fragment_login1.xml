@@ -91,6 +91,17 @@
         android:text="登录"
         android:textSize="20sp" />
 
+    <Button
+        android:id="@+id/setWifi"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="智能配置监控器"
+        android:textSize="20sp"
+        android:background="@drawable/oval"
+        android:layout_marginLeft="22dp"
+        android:layout_marginRight="22dp"
+        android:layout_marginTop="33dp"/>
+
 
 
 

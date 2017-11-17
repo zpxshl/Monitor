@@ -62,6 +62,8 @@ public class LiveFragment extends Fragment {
     private Socket mHeartBeatSocket;
     private OutputStream os;
 
+    private int frame_count; //n秒内播放的帧数，数值太小说明网络不好
+
     // H.264的相关信息
     private final static String MIME_TYPE = "video/avc"; // H.264 Advanced Video
     private final static int VIDEO_WIDTH = 640;
@@ -90,7 +92,7 @@ public class LiveFragment extends Fragment {
                 mCurrentTime = System.currentTimeMillis();
 
                 if (!isRunning) {
-                    liveFromServer();
+                    live();
                 } else {
                     String msg = Data.STOP_PLAY + " " + Data.account + " " + Tools.pwdToMd5(Data.password);
                     new TcpTool(Data.SERVER_IP,Data.SERVER_PORT1).connect(msg,null);
@@ -112,25 +114,34 @@ public class LiveFragment extends Fragment {
         setRetainInstance(true); //Activity被销毁再重新生成时，该fragment不会被重新构造
     }
 
+    //播放视频
+    private void live(){
 
+        liveFromMonitor();
+      //  liveFromServer();
+        mPlay.setText("停止");
+        mSurfaceView.setVisibility(View.VISIBLE);
+        showMsg("正在努力加载，请稍等数秒～");
+    }
 
     private void liveFromMonitor() {
         isRunning = true;
-        UdpTool.sendUDP("255.255.255.255",Data.MONITOR_PORT,new SendCallBack() {
+        String msg = "play_lan " + Data.account + " P "+ Tools.pwdToMd5(Data.password);
+        UdpTool.sendUDP(msg,"255.255.255.255",Data.MONITOR_PORT1,new SendCallBack() {
             @Override
             public void onFinish() {
                 try {
                     startReceive();
-                }catch (Exception e){  //当局域网超过3秒没回应时
+                }catch (Exception e){  //当局域网超过2秒没回应时
+                    release();
                     e.printStackTrace();
-                    close();
                     liveFromServer();   //说明无法直接从监控器那里获取直播数据。所以将数据源改为服务器
                 }
             }
 
             @Override
             public void onError() {
-                liveFromServer();
+
             }
         });
     }
@@ -138,9 +149,6 @@ public class LiveFragment extends Fragment {
     private void liveFromServer(){
 
         isRunning = true;
-        mSurfaceView.setVisibility(View.VISIBLE);
-        mPlay.setText("停止");
-        showMsg("正在努力加载，请稍等数秒～");
 
         new TcpTool(Data.SERVER_IP,Data.SERVER_PORT1).connect(Data.START_PLAY + " " + Data.account + " " + Tools.pwdToMd5(Data.password),new RequestCallBack() {
             @Override
@@ -163,7 +171,7 @@ public class LiveFragment extends Fragment {
                     }
 
 
-                    UdpTool.sendUDP("app" + " " +Data.account + " " + Tools.pwdToMd5(Data.password), port, new SendCallBack() {  //子线程回调
+                    UdpTool.sendUDP("app" + " " +Data.account + " " + Tools.pwdToMd5(Data.password),Data.SERVER_IP, port, new SendCallBack() {  //子线程回调
                         @Override
                         public void onFinish() {
                             try {
@@ -199,13 +207,13 @@ public class LiveFragment extends Fragment {
         isRunning = true;
         initDecoder();
         if (rtp_socket == null) {
-            SipdroidSocket sSocket = new SipdroidSocket(Data.UDP_PORT);
-            sSocket.setSoTimeout(10000);
+            SipdroidSocket sSocket = new SipdroidSocket(Data.Local_UDP_PORT);
+            sSocket.setSoTimeout(4000);
             rtp_socket = new RtpSocket(sSocket);
             rtp_packet = new RtpPacket(socketBuffer, 0);
         }
 
-        startDecoder();  //当它抛出IOE异常，意味着4秒内没收到任何数据
+        startDecoder();  //当它抛出IOE异常，意味着2秒内没收到任何数据
     }
 
 
@@ -257,12 +265,20 @@ public class LiveFragment extends Fragment {
                     e.printStackTrace();
                 }
 
+                Log.e("frame_count",frame_count + " ");
+                if (frame_count < 40){ //5秒内播放小于40帧
+                    isRunning = false;
+                    showMsg("网络不佳，请稍后再播放");
+                    close();
+                }else {
+                    frame_count = 0;
+                }
 
             }
         };
 
         mTimer = new Timer();
-        mTimer.schedule(task,1000,3000);
+        mTimer.schedule(task,8000,5000);
 
         while (isRunning) {
 
@@ -360,6 +376,7 @@ public class LiveFragment extends Fragment {
             System.arraycopy(h254Header, 0, h264Frmbuf, 0, 4);
             System.arraycopy(frmbuf, 0, h264Frmbuf, 4, frmSize);
             onFrame(h264Frmbuf, 0, frmSize + 4);  //播放
+            frame_count++;
 
 
             Thread.sleep(33);    //30帧是硬件的极限，将播放帧率控制在30帧以下，避免由于网络抖动导致的“异常高帧率播放”
@@ -397,30 +414,19 @@ public class LiveFragment extends Fragment {
         return true;
     }
 
-    private void close() {
-        isRunning = false;
-
+    //释放播放视频时启动的相关资源
+    private void release(){
         if (mTimer != null){
-            mTimer.cancel();  //关闭心跳包
+            mTimer.cancel();  //关闭心跳包(
             Log.e("mTimer","mTimer cancel");
         }
 
         try {
-           if (mHeartBeatSocket != null){
-               mHeartBeatSocket.close();
-           }
+            if (mHeartBeatSocket != null){
+                mHeartBeatSocket.close();
+            }
         }catch (IOException e){
             e.printStackTrace();
-        }
-
-        if (mActivity != null) {
-            mActivity.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    mPlay.setText("播放");
-                    mSurfaceView.setVisibility(View.INVISIBLE);
-                }
-            });
         }
 
         try {                   //实践证明，mCodec.release(),rtp_socket.close()很容易抛出异常
@@ -438,6 +444,23 @@ public class LiveFragment extends Fragment {
         }
 
         System.gc();
+    }
+
+    private void close() {
+
+        isRunning = false;
+
+        if (mActivity != null) {
+            mActivity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    mPlay.setText("播放");
+                    mSurfaceView.setVisibility(View.INVISIBLE);
+                }
+            });
+        }
+
+        release();
 
     }
 

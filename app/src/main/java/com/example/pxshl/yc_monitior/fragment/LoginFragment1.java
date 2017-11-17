@@ -24,6 +24,7 @@ import android.widget.Toast;
 
 import com.example.pxshl.yc_monitior.R;
 import com.example.pxshl.yc_monitior.activity.MainActivity;
+import com.example.pxshl.yc_monitior.activity.WifiActivity;
 import com.example.pxshl.yc_monitior.inyerface.RequestCallBack;
 import com.example.pxshl.yc_monitior.net.tcp.TcpTool;
 import com.example.pxshl.yc_monitior.util.Data;
@@ -91,6 +92,17 @@ public class LoginFragment1 extends Fragment{
                 }
             });
 
+            Button setWifi = (Button) mView.findViewById(R.id.setWifi);
+            setWifi.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent intent = new Intent(mActivity
+                            , WifiActivity.class);
+                    startActivity(intent);
+                }
+            });
+
+
 
 
             Button loginBtn = (Button) mView.findViewById(R.id.login_btn);
@@ -121,6 +133,19 @@ public class LoginFragment1 extends Fragment{
                                     showMsg("服务器异常，请稍后重试");
                                 } else if (response.contains("true")) {
 
+                                    String[] responses = response.split(" ");
+
+                                   try {  //防止服务器抽风，不按规定格式返回数据，加try catch
+                                       Data.alarm_sensitivity = Integer.decode(responses[2]);
+
+                                       if (Long.decode(responses[3]) != -1){
+                                           Data.phone_num = responses[3];
+                                       }
+
+                                   }catch (Exception e){
+                                       e.printStackTrace();
+                                   }
+
                                     Data.isLogin = true;
                                     Data.account = account;
                                     Data.password = password;
@@ -133,6 +158,8 @@ public class LoginFragment1 extends Fragment{
                                         editor.putString("account", account);
                                         editor.putString("password", password);
                                         editor.putBoolean("isLogin", true);
+                                        editor.putInt("alarm_sensitivity",Data.alarm_sensitivity);
+                                        editor.putString("phone_num",Data.phone_num);
                                         editor.commit();
                                     }
 
