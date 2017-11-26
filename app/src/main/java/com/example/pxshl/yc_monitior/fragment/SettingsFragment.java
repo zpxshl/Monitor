@@ -33,7 +33,7 @@ import static android.content.Context.MODE_PRIVATE;
 
 public class SettingsFragment extends Fragment {
 
-    private Button mSetAlarm;
+    //   private Button mSetAlarm;
     private Activity mActivity;
 
     @Override
@@ -43,7 +43,7 @@ public class SettingsFragment extends Fragment {
     }
 
     @Override   //兼容低版本安卓系统
-    public void onAttach(Activity activity){
+    public void onAttach(Activity activity) {
         super.onAttach(activity);
         mActivity = getActivity();
     }
@@ -57,12 +57,12 @@ public class SettingsFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_settings,null);
+        View view = inflater.inflate(R.layout.fragment_settings, null);
 
         Button login = (Button) view.findViewById(R.id.login);
         Button setWifi = (Button) view.findViewById(R.id.setWifi);
-        mSetAlarm = (Button) view.findViewById(R.id.setAlram);
-        final SeekBar bar = (SeekBar) view.findViewById(R.id.alarm_sensitivity);
+        //   mSetAlarm = (Button) view.findViewById(R.id.setAlram);
+        //  final SeekBar bar = (SeekBar) view.findViewById(R.id.alarm_sensitivity);
 
 
         login.setOnClickListener(new View.OnClickListener() {
@@ -86,7 +86,7 @@ public class SettingsFragment extends Fragment {
 
 
 
-        mSetAlarm.setOnClickListener(new View.OnClickListener() {
+    /*    mSetAlarm.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (bar.getVisibility() == View.INVISIBLE){
@@ -144,25 +144,25 @@ public class SettingsFragment extends Fragment {
 
 
             }
-        });
+        });*/
 
 
         login.setText(Data.account + " 欢迎您");
 
-       if(Data.alarm_sensitivity == 0){
+ /*      if(Data.alarm_sensitivity == 0){
             mSetAlarm.setText("未开启报警");
         }else {
            mSetAlarm.setText("报警灵敏度: " + Data.alarm_sensitivity + "%");
         }
 
-        bar.setProgress(Data.alarm_sensitivity);
+        bar.setProgress(Data.alarm_sensitivity);*/
 
         return view;
     }
 
 
 
-    private void showMsg(final String msg){
+ /*   private void showMsg(final String msg){
         if (mActivity != null){
             mActivity.runOnUiThread(new Runnable() {
                 @Override
@@ -171,7 +171,7 @@ public class SettingsFragment extends Fragment {
                 }
             });
         }
-    }
+    }*/
 
 
 }

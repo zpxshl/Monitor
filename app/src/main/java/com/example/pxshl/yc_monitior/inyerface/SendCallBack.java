@@ -5,6 +5,7 @@ package com.example.pxshl.yc_monitior.inyerface;
  */
 
 public interface SendCallBack {
-    public void onFinish();
-    public void onError();
+    void onFinish();
+
+    void onError();
 }

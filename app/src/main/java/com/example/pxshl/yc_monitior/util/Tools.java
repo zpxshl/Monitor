@@ -17,8 +17,8 @@ public class Tools {
     public static String pwdToMd5(String pwd) {
         //复合字符串，密码+时间戳（精确到十位）+混淆字符串
         //+号被重载！！！！！！！！！！！！！！
-        String recombination = pwd + '_' + (System.currentTimeMillis() / 1000L / 100L  + 1 )+ "_topsky";
-  //      Log.e("recombinationr",recombination);
+        String recombination = pwd + '_' + (System.currentTimeMillis() / 1000L / 100L + 1) + "_topsky";
+        //      Log.e("recombinationr",recombination);
         StringBuilder builder = new StringBuilder();
         try {
             MessageDigest md5 = MessageDigest.getInstance("MD5");
@@ -41,19 +41,25 @@ public class Tools {
     }
 
 
-    /** The random seed */
+    /**
+     * The random seed
+     */
     static final long seed = System.currentTimeMillis();
     // static final long seed=0;
 
     private static java.util.Random rand = new java.util.Random(seed);
 
-    /** Returns a random integer */
+    /**
+     * Returns a random integer
+     */
     public static int nextInt() {
         return rand.nextInt();
     }
 
 
-    /** Returns a random long */
+    /**
+     * Returns a random long
+     */
     public static long nextLong() {
         return rand.nextLong();
     }
@@ -62,18 +68,18 @@ public class Tools {
     public static List<String> getFileList(String strPath) {
 
         List<String> fileList = new ArrayList<>();
-        File[] folders =    new File(strPath).listFiles(); // 该文件目录下文件全部放入数组(都是文件夹)
+        File[] folders = new File(strPath).listFiles(); // 该文件目录下文件全部放入数组(都是文件夹)
 
-       if (folders != null) {
-           for (File folder : folders){
-               File[] files = folder.listFiles();
-               if (files != null){
-                   for (File file:files){
-                       fileList.add(folder.getName() + "/" + file.getName());
-                   }
-               }
-           }
-       }
+        if (folders != null) {
+            for (File folder : folders) {
+                File[] files = folder.listFiles();
+                if (files != null) {
+                    for (File file : files) {
+                        fileList.add(folder.getName() + "/" + file.getName());
+                    }
+                }
+            }
+        }
 
         return fileList;
     }

@@ -1,18 +1,23 @@
 package com.example.pxshl.yc_monitior.activity;
 
+import android.Manifest;
+import android.annotation.TargetApi;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.annotation.RequiresApi;
 import android.support.design.widget.BottomNavigationView;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.MenuItem;
 import android.widget.Toast;
 
@@ -21,19 +26,22 @@ import com.example.pxshl.yc_monitior.fragment.AlarmFragment;
 import com.example.pxshl.yc_monitior.fragment.DownLoadFragment;
 import com.example.pxshl.yc_monitior.fragment.LiveFragment;
 import com.example.pxshl.yc_monitior.fragment.SettingsFragment;
-import com.example.pxshl.yc_monitior.inyerface.RequestCallBack;
-import com.example.pxshl.yc_monitior.net.tcp.TcpTool;
+
 import com.example.pxshl.yc_monitior.util.Data;
-import com.example.pxshl.yc_monitior.util.Tools;
+import com.tbruyelle.rxpermissions2.RxPermissions;
+
 
 import java.util.ArrayList;
 import java.util.List;
+
+import io.reactivex.functions.Consumer;
+
 
 /**
  * 主活动，申请各种运行时权限，并让Alarm，Live，Download，setting四个碎片依附
  * 通过Fragment+ViewPager+BottomNavigationView实现滑动与导航效果
  */
-public class MainActivity extends AppCompatActivity{
+public class MainActivity extends AppCompatActivity {
 
     private List<Fragment> mList;
     private ViewPager mViewPager;
@@ -51,33 +59,51 @@ public class MainActivity extends AppCompatActivity{
 
     };
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        if (ContextCompat.checkSelfPermission(this, "android.permission.ACCESS_FINE_LOCATION") != PackageManager.PERMISSION_GRANTED ||
-                ContextCompat.checkSelfPermission(this,"android.permission.WRITE_EXTERNAL_STORAGE") != PackageManager.PERMISSION_GRANTED   ) {
-            requestPermissions(new String[]{"android.permission.ACCESS_FINE_LOCATION","android.permission.WRITE_EXTERNAL_STORAGE"},0);
+        long maxMemory = Runtime.getRuntime().maxMemory() / 1024 / 1024;
+        long totalMemory = Runtime.getRuntime().totalMemory() / 1024 / 1024;
+        Log.e("tag", maxMemory + "  " + totalMemory);
 
-        }else{
-            init();
-        }
+        requestPermissions();
     }
+
+    private void requestPermissions() {
+
+
+        RxPermissions rxPermissions = new RxPermissions(this);
+        rxPermissions.request(Manifest.permission.WRITE_EXTERNAL_STORAGE).subscribe(new Consumer<Boolean>() {
+            @Override
+            public void accept(Boolean aBoolean) throws Exception {
+                if (aBoolean) {
+                    init();
+                } else {
+                    Toast.makeText(MainActivity.this, "请授予程序访问储存空间的权限（下载监控视频时需要）", Toast.LENGTH_LONG).show();
+                    finish();
+                }
+            }
+        });
+
+    }
+
 
     private void init() {
 
-        if (!Data.isLogin){
+        if (!Data.isLogin) {
             //判断是否已经登陆过（且记住密码）
-            SharedPreferences preferences = getSharedPreferences("properties",MODE_PRIVATE);
-            Data.isLogin = preferences.getBoolean("isLogin",false);
-            Data.account = preferences.getString("account","");
-            Data.password = preferences.getString("password","");
-            Data.alarm_sensitivity = preferences.getInt("alarm_sensitivity",-1);
-            Data.phone_num = preferences.getString("phone_num","");
+            SharedPreferences preferences = getSharedPreferences("properties", MODE_PRIVATE);
+            Data.isLogin = preferences.getBoolean("isLogin", false);
+            Data.account = preferences.getString("account", "");
+            Data.password = preferences.getString("password", "");
+            //   Data.alarm_sensitivity = preferences.getInt("alarm_sensitivity",-1);
+            Data.phone_num = preferences.getString("phone_num", "");
 
-            if (!Data.isLogin){ //如果没登陆，跳转到登陆界面
-                Intent intent = new Intent(this,LoginActivity.class);
+            if (!Data.isLogin) { //如果没登陆，跳转到登陆界面
+                Intent intent = new Intent(this, LoginActivity.class);
                 startActivity(intent);
                 finish();
                 return;
@@ -127,20 +153,6 @@ public class MainActivity extends AppCompatActivity{
         });
 
 
-    }
-
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode,  String[] permissions, int[] grantResults) {
-        if (requestCode == 0) {
-            if (grantResults[0] != PackageManager.PERMISSION_GRANTED || grantResults[1] != PackageManager.PERMISSION_GRANTED) {
-                Toast.makeText(getApplicationContext(), "请授予程序必要的权限", Toast.LENGTH_SHORT).show();
-                finish();
-            }else {
-                init();
-            }
-            super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        }
     }
 
 

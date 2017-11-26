@@ -1,12 +1,13 @@
 package com.example.pxshl.yc_monitior.activity;
 
-
+import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
-import android.net.ConnectivityManager;
+import android.location.LocationManager;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.support.v7.app.AppCompatActivity;
@@ -14,26 +15,20 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.pxshl.yc_monitior.R;
 import com.example.pxshl.yc_monitior.adapter.WifiAdapter;
+import com.example.pxshl.yc_monitior.inyerface.RequestCallBack;
+import com.example.pxshl.yc_monitior.net.tcp.TcpTool;
 import com.example.pxshl.yc_monitior.util.Data;
+import com.tbruyelle.rxpermissions2.RxPermissions;
 
-import java.io.BufferedInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InterruptedIOException;
-import java.io.OutputStream;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.Socket;
+
 import java.util.List;
 
-import static android.R.attr.enabled;
+import io.reactivex.functions.Consumer;
 
 
 /**
@@ -42,49 +37,76 @@ import static android.R.attr.enabled;
 
 public class WifiActivity extends AppCompatActivity {
 
+    private static final String MonitorWifiName = "TP-LINK_5G_FAE3"; //监控器的wifi名
+    //"Pi3-AP"
 
-   private static final String MonitorWifiName = "Pi3-AP"; //监控器的wifi名
-    private RecyclerView wifiList;
-    private WifiAdapter mAdapter;
     private WifiManager mWifiManager;
+    private TextView mBlankTV;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_wifi);
-        init();
+        requestPermissions();
+    }
+
+    private void requestPermissions() {
+
+
+        RxPermissions rxPermissions = new RxPermissions(this);
+        rxPermissions.request(Manifest.permission.ACCESS_FINE_LOCATION).subscribe(new Consumer<Boolean>() {
+            @Override
+            public void accept(Boolean aBoolean) throws Exception {
+                if (aBoolean) {
+                    init();
+                } else {
+                    Toast.makeText(WifiActivity.this, "请授予程序获取位置信息的权限（扫描wifi列表需要）", Toast.LENGTH_LONG).show();
+                    finish();
+                }
+            }
+        });
     }
 
 
     public void init() {
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            LocationManager locationManager
+                    = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+            boolean gps = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+            boolean network = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+            if (!gps && !network) {
+                Toast.makeText(WifiActivity.this, "请打开位置权限（扫描wifi列表需要）", Toast.LENGTH_LONG).show();
+                startActivity(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS));
+            }
+        }
+
+        mBlankTV = (TextView) findViewById(R.id.blank_tv);
+
         mWifiManager = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
-
-
 
         if (!mWifiManager.isWifiEnabled()) {  //打开wifi
             mWifiManager.setWifiEnabled(true);
         }
 
         mWifiManager.startScan();
-        wifiList = (RecyclerView) findViewById(R.id.wifi_list);
 
+        if (hasMonitorWifi(MonitorWifiName)) {
 
-        if (hasMonitorWifi(MonitorWifiName)){
-
-            if (isConnectMonitor()){
+            if (isConnectMonitor()) {
                 return;
             }
 
-            if (connectMonitorWifi(MonitorWifiName)){ //让手机去连接监控器的wifi
+            if (connectMonitorWifi(MonitorWifiName)) { //让手机去连接监控器的wifi
 
                 new Thread(new Runnable() {    //子线程轮询是否连接上指定wifi
                     @Override
                     public void run() {
                         int count = 8;   //判断时间为 <8秒
-                        while(count > 0){
+                        while (count > 0) {
 
-                            if (isConnectMonitor()){
+                            if (isConnectMonitor()) {
                                 break;
                             }
 
@@ -92,33 +114,27 @@ public class WifiActivity extends AppCompatActivity {
 
                             try {
                                 Thread.sleep(1000);
-                            }catch (Exception e){
+                            } catch (Exception e) {
                                 e.printStackTrace();
                             }
                         }
 
-                        if ( count <= 0){
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    Toast.makeText(WifiActivity.this,"连接监控器wifi失败，请手动连接",Toast.LENGTH_SHORT).show();
-                                    startActivity(new Intent(Settings.ACTION_WIFI_SETTINGS)); //打开系统的wifi界面
-                                    finish();
-
-                                }
-                            });
+                        if (count <= 0) {
+                            showMsg("连接监控器wifi失败，请手动连接");
+                            startActivity(new Intent(Settings.ACTION_WIFI_SETTINGS)); //打开系统的wifi界面
+                            finish();
                         }
                     }
                 }).start();
 
-            }else {
-                Toast.makeText(this,"连接监控器wifi失败，请手动连接",Toast.LENGTH_SHORT).show();
+            } else {
+                showMsg("连接监控器wifi失败，请手动连接");
                 startActivity(new Intent(Settings.ACTION_WIFI_SETTINGS));
                 finish();
 
             }
-        }else {
-            Toast.makeText(this,"请靠近监控器，并打开监控器的wifi",Toast.LENGTH_SHORT).show();
+        } else {
+            showMsg("请靠近监控器，并打开监控器的wifi");
         }
 
 
@@ -126,42 +142,42 @@ public class WifiActivity extends AppCompatActivity {
 
 
     /**
-     *
-     * @param SSID   要判断时候存在的wifi的SSID
-     * @return  ture表示该SSID对应的wifi在附近
+     * @param SSID 要判断时候存在的wifi的SSID
+     * @return ture表示该SSID对应的wifi在附近
      */
-    private boolean hasMonitorWifi(String SSID){
+    private boolean hasMonitorWifi(String SSID) {
         //先刷新wifi列表
         List<ScanResult> results = mWifiManager.getScanResults();
-        for (ScanResult result : results){
-            Log.e("SSID",result.SSID);
-            if (result.SSID.contains(SSID)){
+        for (ScanResult result : results) {
+            Log.e("SSID", result.SSID);
+            if (result.SSID.contains(SSID)) {
                 return true;
             }
         }
         return false;
     }
 
-    private boolean isConnectMonitor(){
-             //先判断当前连接的wifi时候为监控器的wifi
-            //mWifiManager.getConnectionInfo().getSSID(),就算当前没连接wifi也会返回上一次尝试连接的wifi的数据，因此可能导致错误
+    private boolean isConnectMonitor() {
+        //先判断当前连接的wifi时候为监控器的wifi
+        //mWifiManager.getConnectionInfo().getSSID(),就算当前没连接wifi也会返回上一次尝试连接的wifi的数据，因此可能导致错误
 
-            if (mWifiManager.getConnectionInfo().getSSID().contains(MonitorWifiName)){  //轮询方式，判断连接上是不是监控器的wifi
+        if (mWifiManager.getConnectionInfo().getSSID().contains(MonitorWifiName)) {  //轮询方式，判断连接上是不是监控器的wifi
 
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
 
-                        //显示wifi列表
-                        mAdapter = new WifiAdapter(WifiActivity.this, mWifiManager.getScanResults());
-                        wifiList.setLayoutManager(new LinearLayoutManager(WifiActivity.this));
-                        wifiList.setAdapter(mAdapter);
-                        findViewById(R.id.wifi_explain_tv).setVisibility(View.VISIBLE);
-                    }
-                });
+                    //显示wifi列表
+                    RecyclerView wifiList = (RecyclerView) findViewById(R.id.wifi_list);
+                    WifiAdapter adapter = new WifiAdapter(WifiActivity.this, mWifiManager.getScanResults());
+                    wifiList.setLayoutManager(new LinearLayoutManager(WifiActivity.this));
+                    wifiList.setAdapter(adapter);
+                    mBlankTV.setVisibility(View.GONE);
+                }
+            });
 
-                return true;
-            }
+            return true;
+        }
         return false;
     }
 
@@ -171,13 +187,13 @@ public class WifiActivity extends AppCompatActivity {
         List<WifiConfiguration> wifiConfigurationList = mWifiManager.getConfiguredNetworks();
 
         //防止系统在你接下去的代码调用enableNetwork时候，系统自动连接其他wifi
-        for (WifiConfiguration config : wifiConfigurationList){
-                mWifiManager.disableNetwork(config.networkId);
+        for (WifiConfiguration config : wifiConfigurationList) {
+            mWifiManager.disableNetwork(config.networkId);
         }
 
-        for (WifiConfiguration config : wifiConfigurationList){
-            if (config.SSID.equals('\"' + SSID+ '\"')){
-                mWifiManager.enableNetwork(config.networkId,true);
+        for (WifiConfiguration config : wifiConfigurationList) {
+            if (config.SSID.equals('\"' + SSID + '\"')) {
+                mWifiManager.enableNetwork(config.networkId, true);
                 return true;
             }
         }
@@ -185,10 +201,10 @@ public class WifiActivity extends AppCompatActivity {
         WifiConfiguration config = createWifiConfig(SSID);
         int netId = mWifiManager.addNetwork(config);
 
-        if ( -1 == netId){
+        if (-1 == netId) {
             return false;
-        }else {
-            mWifiManager.enableNetwork(netId,true);
+        } else {
+            mWifiManager.enableNetwork(netId, true);
             return true;
         }
 
@@ -207,62 +223,37 @@ public class WifiActivity extends AppCompatActivity {
     }
 
 
-    public void sendToMonitor(final String msg){
-        new Thread(new Runnable() {
+    public void sendToMonitor(final String msg) {
+
+        showMsg("请稍等十秒，不要退出APP");
+
+        new TcpTool(Data.MONITOR_WIFI_IP, Data.MONITOR_PORT2).connect(msg, new RequestCallBack() {
+            @Override
+            public void onFinish(String response) {
+
+                showMsg("请观察监控器的绿灯是否亮，绿灯亮则说明监控器已经连接上wifi"
+                        + "如果15秒后监控器绿灯没有亮，请重新配置监控器");
+
+            }
+
+            @Override
+            public void onError() {
+                showMsg("配置失败，请检查当前连接的wifi是否为监控器wifi，并确保选择的您的wifi和输入正确的密码"
+                        + "请重新配置监控器");
+            }
+        });
+    }
+
+
+    private void showMsg(final String msg) {
+        runOnUiThread(new Runnable() {
             @Override
             public void run() {
-
-
-
-                OutputStream os;
-                Socket socket = null;
-                try {
-                    socket = new Socket(Data.MONITOR_WIFI_IP,Data.MONITOR_PORT2);
-                    os = socket.getOutputStream();
-                    byte[] buffer = (msg).getBytes();
-                    os.write(buffer);
-                    os.flush();
-
-                    String msg;
-
-                    if (isMonitorConnect()){
-                        msg = "wifi密码错误，请重新输入";
-                    }else {
-                        msg = "恭喜您，监控器已经连接上wifi啦";
-                    }
-
-                    Toast.makeText(WifiActivity.this,msg,Toast.LENGTH_SHORT).show();
-                }
-                catch (Exception e) {
-                    e.printStackTrace();
-                }finally {
-                    try{
-                        if (socket != null)
-                             socket.close();
-                    }catch (IOException e){
-
-                    }
-
-                }
+                Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_SHORT).show();
+                mBlankTV.setVisibility(View.VISIBLE);
+                mBlankTV.setText(msg);
             }
-        }).start();
+        });
     }
-
-    //通过判断监控器有没有重新发出wifi
-    private boolean isMonitorConnect() throws InterruptedException{
-
-        for (int i = 12 ; i > 0 ;i--){    //12秒内 如果监控器没有重新发出wifi，则可以认为它已经连接上指定wifi
-            for (ScanResult result : mWifiManager.getScanResults()){
-                if (result.SSID.contains(MonitorWifiName)){
-                    return false;
-                }
-            }
-
-            Thread.sleep(1000);
-        }
-        return true;
-    }
-
-
 
 }

@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.media.MediaCodec;
 import android.media.MediaFormat;
+
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -43,6 +44,8 @@ import java.util.TimerTask;
 
 public class LiveFragment extends Fragment {
 
+    private static final String TAG = "LiveFragment";
+
     private transient boolean isRunning;
 
     private RtpSocket rtp_socket = null;
@@ -62,15 +65,10 @@ public class LiveFragment extends Fragment {
     private Socket mHeartBeatSocket;
     private OutputStream os;
 
-    private int frame_count; //n秒内播放的帧数，数值太小说明网络不好
 
-    // H.264的相关信息
-    private final static String MIME_TYPE = "video/avc"; // H.264 Advanced Video
-    private final static int VIDEO_WIDTH = 640;
-    private final static int VIDEO_HEIGHT = 480;
-    private final static int TIME_INTERNAL = 15;
-    private byte[] sps = {0, 0, 0, 1, 39, 100, 0, 40, -84, 43, 64, 80, 30, -48, 15, 18, 38, -96};
-    private byte[] pps = {0, 0, 0, 1, 40, -18, 2, 92, -80};
+    private enum LiveFrom {Monitor, Server}
+
+    ;
 
 
     @Override
@@ -84,8 +82,8 @@ public class LiveFragment extends Fragment {
             public void onClick(View v) {
 
 
-                if (System.currentTimeMillis() - mCurrentTime < 3000){  //服务器要求的
-                    Toast.makeText(getContext(),"请休息下，别按得太快哦～",Toast.LENGTH_SHORT).show();
+                if (System.currentTimeMillis() - mCurrentTime < 3000) {  //服务器要求的
+                    Toast.makeText(getContext(), "请休息下，别按得太快哦～", Toast.LENGTH_SHORT).show();
                     return;
                 }
 
@@ -95,7 +93,7 @@ public class LiveFragment extends Fragment {
                     live();
                 } else {
                     String msg = Data.STOP_PLAY + " " + Data.account + " " + Tools.pwdToMd5(Data.password);
-                    new TcpTool(Data.SERVER_IP,Data.SERVER_PORT1).connect(msg,null);
+                    new TcpTool(Data.SERVER_IP, Data.SERVER_PORT1).connect(msg, null);
                     close();
                 }
 
@@ -107,7 +105,6 @@ public class LiveFragment extends Fragment {
     }
 
 
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -115,10 +112,9 @@ public class LiveFragment extends Fragment {
     }
 
     //播放视频
-    private void live(){
+    private void live() {
 
         liveFromMonitor();
-      //  liveFromServer();
         mPlay.setText("停止");
         mSurfaceView.setVisibility(View.VISIBLE);
         showMsg("正在努力加载，请稍等数秒～");
@@ -126,13 +122,13 @@ public class LiveFragment extends Fragment {
 
     private void liveFromMonitor() {
         isRunning = true;
-        String msg = "play_lan " + Data.account + " P "+ Tools.pwdToMd5(Data.password);
-        UdpTool.sendUDP(msg,"255.255.255.255",Data.MONITOR_PORT1,new SendCallBack() {
+        String msg = "play_lan " + Data.account + " P " + Tools.pwdToMd5(Data.password);
+        UdpTool.sendUDP(msg, "255.255.255.255", Data.MONITOR_PORT1, new SendCallBack() {
             @Override
             public void onFinish() {
                 try {
-                    startReceive();
-                }catch (Exception e){  //当局域网超过2秒没回应时
+                    startReceive(LiveFrom.Monitor);
+                } catch (Exception e) {  //当局域网超过5秒没回应时
                     release();
                     e.printStackTrace();
                     liveFromServer();   //说明无法直接从监控器那里获取直播数据。所以将数据源改为服务器
@@ -146,21 +142,23 @@ public class LiveFragment extends Fragment {
         });
     }
 
-    private void liveFromServer(){
+    private void liveFromServer() {
 
         isRunning = true;
 
-        new TcpTool(Data.SERVER_IP,Data.SERVER_PORT1).connect(Data.START_PLAY + " " + Data.account + " " + Tools.pwdToMd5(Data.password),new RequestCallBack() {
+        new TcpTool(Data.SERVER_IP, Data.SERVER_PORT1).connect(Data.START_PLAY + " " + Data.account + " " + Tools.pwdToMd5(Data.password), new RequestCallBack() {
             @Override
             public void onFinish(String response) {
 
                 if (response.contains("offline")) {
+                    Log.e(TAG, "offLine");
                     close();
                     showMsg("监控器不在线");
-                }else if (response.equals("")){
+                } else if (response.equals("")) {
+                    Log.e(TAG, "response.equal");
                     close();
                     showMsg("服务器异常，请稍后再试");
-                }else {
+                } else {
 
                     int port = 0;
                     try {
@@ -170,16 +168,17 @@ public class LiveFragment extends Fragment {
                         return;
                     }
 
-
-                    UdpTool.sendUDP("app" + " " +Data.account + " " + Tools.pwdToMd5(Data.password),Data.SERVER_IP, port, new SendCallBack() {  //子线程回调
+                    String msg = "app" + " " + Data.account + " " + Tools.pwdToMd5(Data.password);
+                    UdpTool.sendUDP("app", Data.SERVER_IP, port, new SendCallBack() {  //子线程回调
                         @Override
                         public void onFinish() {
                             try {
-                                startReceive(); //在子线程中操作
-                            }catch (Exception e){
+                                startReceive(LiveFrom.Server); //在子线程中操作
+                            } catch (Exception e) {
+                                e.printStackTrace();
                                 close();
                                 showMsg("网络异常，请检查网络");
-                                e.printStackTrace();
+
                             }
 
                         }
@@ -192,7 +191,7 @@ public class LiveFragment extends Fragment {
                     });
                 }
 
-        }
+            }
 
             @Override
             public void onError() {
@@ -203,12 +202,18 @@ public class LiveFragment extends Fragment {
         });
     }
 
-    private void startReceive() throws Exception{
+    private void startReceive(LiveFrom liveFrom) throws Exception {
         isRunning = true;
         initDecoder();
         if (rtp_socket == null) {
             SipdroidSocket sSocket = new SipdroidSocket(Data.Local_UDP_PORT);
-            sSocket.setSoTimeout(4000);
+            //局域网 和 公网 设置的超时间改为不同值
+            if (liveFrom == LiveFrom.Monitor) {
+                sSocket.setSoTimeout(3000);
+            } else if (liveFrom == LiveFrom.Server) {
+                sSocket.setSoTimeout(7000);
+            }
+
             rtp_socket = new RtpSocket(sSocket);
             rtp_packet = new RtpPacket(socketBuffer, 0);
         }
@@ -219,10 +224,14 @@ public class LiveFragment extends Fragment {
 
     public void initDecoder() {
 
+        String MIME_TYPE = "video/avc";
+        byte[] sps = {0, 0, 0, 1, 39, 100, 0, 40, -84, 43, 64, 80, 30, -48, 15, 18, 38, -96};
+        byte[] pps = {0, 0, 0, 1, 40, -18, 2, 92, -80};
+
         try {
             mCodec = MediaCodec.createDecoderByType(MIME_TYPE);
             MediaFormat mediaFormat = MediaFormat.createVideoFormat(MIME_TYPE,
-                    VIDEO_WIDTH, VIDEO_HEIGHT);
+                    640, 480);
             mediaFormat.setByteBuffer("csd-0", ByteBuffer.wrap(sps));
             mediaFormat.setByteBuffer("csd-1", ByteBuffer.wrap(pps));
 
@@ -235,8 +244,7 @@ public class LiveFragment extends Fragment {
     }
 
 
-
-    private void startDecoder() throws Exception{
+    private void startDecoder() throws Exception {
         boolean hasStartPacket, hasEndPacket, isContinue, isRightGet;
         int lastSequence, nowSequence, frmSize;
 
@@ -244,41 +252,33 @@ public class LiveFragment extends Fragment {
         TimerTask task = new TimerTask() {
             @Override
             public void run() {
-
                 String msg = Data.HEART_BEAT + " " + Data.account + " " + Tools.pwdToMd5(Data.password);
                 byte[] buffer = (msg + '\n').getBytes();
 
-                try{
-                    if (mHeartBeatSocket == null || !mHeartBeatSocket.isConnected() || mHeartBeatSocket.isClosed()){
-                        mHeartBeatSocket = new Socket(Data.SERVER_IP,Data.SERVER_PORT3);
+                try {
+                    if (mHeartBeatSocket == null || !mHeartBeatSocket.isConnected() || mHeartBeatSocket.isClosed()) {
+                        mHeartBeatSocket = new Socket(Data.SERVER_IP, Data.SERVER_PORT3);
                         os = mHeartBeatSocket.getOutputStream();
                     }
 
-                    if (os == null){
+                    if (os == null) {
                         os = mHeartBeatSocket.getOutputStream();
                     }
+
 
                     os.write(buffer);
                     os.flush();
 
-                }catch (Exception e){
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
 
-                Log.e("frame_count",frame_count + " ");
-                if (frame_count < 40){ //5秒内播放小于40帧
-                    isRunning = false;
-                    showMsg("网络不佳，请稍后再播放");
-                    close();
-                }else {
-                    frame_count = 0;
-                }
 
             }
         };
 
         mTimer = new Timer();
-        mTimer.schedule(task,8000,5000);
+        mTimer.schedule(task, 0, 5000);
 
         while (isRunning) {
 
@@ -292,7 +292,7 @@ public class LiveFragment extends Fragment {
 
             while (isContinue) {
 
-             rtp_socket.receive(rtp_packet);
+                rtp_socket.receive(rtp_packet);
 
                 int packetSize = rtp_packet.getPayloadLength();
                 if (packetSize <= 2)
@@ -316,7 +316,7 @@ public class LiveFragment extends Fragment {
                 if ((buffer[0] & 0x1F) == 28) {
                     switch ((buffer[1] >> 6) & 0x03) {
                         case 2:
-                            Log.e("Begin", nowSequence + "");
+                            Log.e(TAG, "Begin: " + nowSequence + "");
                             if (hasStartPacket) {
                                 isContinue = false;
                                 isRightGet = false;
@@ -332,7 +332,7 @@ public class LiveFragment extends Fragment {
                             break;
 
                         case 0:
-                            Log.e("Middle", nowSequence + "");
+                            Log.e(TAG, "Middle" + nowSequence + "");
                             if (nowSequence - lastSequence != 1 || !hasStartPacket) {
                                 isContinue = false;
                                 isRightGet = false;
@@ -345,7 +345,7 @@ public class LiveFragment extends Fragment {
                             break;
 
                         case 1:
-                            Log.e("END", nowSequence + "");
+                            Log.e(TAG, "End" + nowSequence + "");
                             if (hasEndPacket || (nowSequence - lastSequence != 1) || !hasStartPacket) {
                                 isContinue = false;
                                 isRightGet = false;
@@ -376,7 +376,6 @@ public class LiveFragment extends Fragment {
             System.arraycopy(h254Header, 0, h264Frmbuf, 0, 4);
             System.arraycopy(frmbuf, 0, h264Frmbuf, 4, frmSize);
             onFrame(h264Frmbuf, 0, frmSize + 4);  //播放
-            frame_count++;
 
 
             Thread.sleep(33);    //30帧是硬件的极限，将播放帧率控制在30帧以下，避免由于网络抖动导致的“异常高帧率播放”
@@ -397,7 +396,7 @@ public class LiveFragment extends Fragment {
             inputBuffer.clear();
             inputBuffer.put(buf, offset, length);
             mCodec.queueInputBuffer(inputBufferIndex, 0, length, mCount
-                    * TIME_INTERNAL, 0);
+                    * 15L, 0);
             mCount++;
         } else {
             return false;
@@ -415,19 +414,8 @@ public class LiveFragment extends Fragment {
     }
 
     //释放播放视频时启动的相关资源
-    private void release(){
-        if (mTimer != null){
-            mTimer.cancel();  //关闭心跳包(
-            Log.e("mTimer","mTimer cancel");
-        }
+    private void release() {
 
-        try {
-            if (mHeartBeatSocket != null){
-                mHeartBeatSocket.close();
-            }
-        }catch (IOException e){
-            e.printStackTrace();
-        }
 
         try {                   //实践证明，mCodec.release(),rtp_socket.close()很容易抛出异常
             Thread.sleep(60);   //让正在播放的视频完全播放完
@@ -439,15 +427,29 @@ public class LiveFragment extends Fragment {
                 rtp_socket.close();
                 rtp_socket = null;
             }
-        }catch (Exception e){
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        System.gc();
+
+        if (mTimer != null) {
+            mTimer.cancel();  //关闭心跳包(
+            Log.e(TAG, "mTimer cancel");
+        }
+
+        try {
+            if (mHeartBeatSocket != null) {
+                mHeartBeatSocket.close();
+            }
+        } catch (IOException e) {
             e.printStackTrace();
         }
 
-        System.gc();
+
     }
 
     private void close() {
-
+        Log.e(TAG, "close");
         isRunning = false;
 
         if (mActivity != null) {
@@ -464,7 +466,7 @@ public class LiveFragment extends Fragment {
 
     }
 
-    private void showMsg(final String msg){
+    private void showMsg(final String msg) {
         if (mActivity != null) {
             mActivity.runOnUiThread(new Runnable() {
                 @Override
@@ -476,8 +478,6 @@ public class LiveFragment extends Fragment {
     }
 
 
-
-
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
@@ -485,7 +485,7 @@ public class LiveFragment extends Fragment {
     }
 
     @Override   //兼容低版本安卓系统
-    public void onAttach(Activity activity){
+    public void onAttach(Activity activity) {
         super.onAttach(activity);
         mActivity = getActivity();
     }
@@ -493,7 +493,7 @@ public class LiveFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        if (isRunning){
+        if (isRunning) {
             close();
         }
     }

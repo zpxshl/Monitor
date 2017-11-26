@@ -44,7 +44,7 @@ import java.util.Map;
 
 public class DownLoadFragment extends Fragment {
 
-    private ExpandableListView mListView ;   //显示数据的控件
+    private ExpandableListView mListView;   //显示数据的控件
     private DownLoadELVAdapter mAdapter;    //适配器
     private List<String> groupsList;    //一级列表
     private Map<Integer, List<FileInfo>> childMap; //二级列表
@@ -73,14 +73,13 @@ public class DownLoadFragment extends Fragment {
         intentFilter.addAction(DownloadService.FINISH);
         mActivity.registerReceiver(mReceiver, intentFilter);
 
-        if (mView == null){
-            mView = inflater.inflate(R.layout.fragment_download,null);
+        if (mView == null) {
+            mView = inflater.inflate(R.layout.fragment_download, null);
             init();
         }
 
         return mView;
     }
-
 
 
     @Override
@@ -90,7 +89,7 @@ public class DownLoadFragment extends Fragment {
     }
 
     @Override   //兼容低版本安卓系统
-    public void onAttach(Activity activity){
+    public void onAttach(Activity activity) {
         super.onAttach(activity);
         mActivity = getActivity();
     }
@@ -118,19 +117,19 @@ public class DownLoadFragment extends Fragment {
         mListView.setAdapter(mAdapter);
         mListView.setEmptyView(mEmptyTv);
 
-       mListView.setOnTouchListener(new View.OnTouchListener() {    //避免refreshLayout错误消费了ListView的滑动事件 当设置了EmptyView时会出现这问题
-           @Override
-           public boolean onTouch(View v, MotionEvent event) {
-               if ( event.getAction() == MotionEvent.ACTION_MOVE){
-                   if (mListView.getFirstVisiblePosition() == 0 && mListView.getChildAt(0).getTop() >= mListView.getListPaddingTop()){
-                       mSRL.setEnabled(true);
-                   }else {
-                       mSRL.setEnabled(false);
-                   }
-               }
-               return false;
-           }
-       });
+        mListView.setOnTouchListener(new View.OnTouchListener() {    //避免refreshLayout错误消费了ListView的滑动事件 当设置了EmptyView时会出现这问题
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                if (event.getAction() == MotionEvent.ACTION_MOVE) {
+                    if (mListView.getFirstVisiblePosition() == 0 && mListView.getChildAt(0).getTop() >= mListView.getListPaddingTop()) {
+                        mSRL.setEnabled(true);
+                    } else {
+                        mSRL.setEnabled(false);
+                    }
+                }
+                return false;
+            }
+        });
 
         onChildOnClickListener();
         loadFileList();
@@ -148,18 +147,17 @@ public class DownLoadFragment extends Fragment {
 
     //加载下载列表
     private void loadFileList() {
-        new TcpTool(Data.SERVER_IP,Data.SERVER_PORT1).connect(Data.LIST_FILE + " " + Data.account + " " + Tools.pwdToMd5(Data.password),new RequestCallBack() {
+        new TcpTool(Data.SERVER_IP, Data.SERVER_PORT1).connect(Data.LIST_FILE + " " + Data.account + " " + Tools.pwdToMd5(Data.password), new RequestCallBack() {
             @Override
             public void onFinish(String response) {
 
-                if (response.equals("")){
+                if (response.equals("")) {
                     showMsg("出错啦，请稍后再刷新试下～");
-                }
-                else if (response.contains("offline")){
+                } else if (response.contains("offline")) {
                     showMsg("监控器不在线~");
-                }else if(response.contains("no video")){
+                } else if (response.contains("no video")) {
                     showMsg("没有可下载的录像~");
-                } else{
+                } else {
 
                     int file_id = 0;
                     int child_id = 0;
@@ -167,22 +165,22 @@ public class DownLoadFragment extends Fragment {
 
                     List<String> fileList = Tools.getFileList(Data.DL_VIDEO_PATH); //扫描下载列表
 
-                    for (String date : dates){
+                    for (String date : dates) {
                         List<FileInfo> fileInfos = new ArrayList<FileInfo>();
                         String[] fileName = date.split(" ");
 
-                        if (fileName.length <= 0){
+                        if (fileName.length <= 0) {
                             return;
                         }
 
                         groupsList.add(fileName[0]);
 
-                        for (int j = 1; j < fileName.length ;j++){
+                        for (int j = 1; j < fileName.length; j++) {
                             //fileName[0]  + "/"+ fileName[j]  和服务器约定好的文件名格式
-                            FileInfo fileInfo = new FileInfo(file_id,fileName[0]  + '/' + fileName[j]);
+                            FileInfo fileInfo = new FileInfo(file_id, fileName[0] + '/' + fileName[j]);
 
-                            for (String name:fileList){    //判断是否有已经下载
-                                if (name.equals(fileInfo.getFileName())){
+                            for (String name : fileList) {    //判断是否有已经下载
+                                if (name.equals(fileInfo.getFileName())) {
                                     fileInfo.setFinish(true);
                                     break;
                                 }
@@ -192,12 +190,12 @@ public class DownLoadFragment extends Fragment {
                             file_id++;
                         }
 
-                        childMap.put(child_id,fileInfos);
+                        childMap.put(child_id, fileInfos);
                         child_id++;
                     }
 
 
-                    if (mActivity != null){
+                    if (mActivity != null) {
                         mActivity.runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
@@ -237,17 +235,17 @@ public class DownLoadFragment extends Fragment {
                     intent.putExtra("fileInfo", fileInfo);
                     mActivity.startService(intent);
                     Toast.makeText(getContext(), fileInfo.getFileName() + "停止下载", Toast.LENGTH_SHORT).show();
-                } else if (fileInfo.isFinish()){
+                } else if (fileInfo.isFinish()) {
                     //播放视频，启动系统的播放器进行播放
                     Intent mp4Intent = new Intent("android.intent.action.VIEW");
                     Uri uri;
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N){ //安卓N或以上
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) { //安卓N或以上
                         mp4Intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                        uri = FileProvider.getUriForFile(getContext(), BuildConfig.APPLICATION_ID + ".fileProvider", new File(Data.DL_VIDEO_PATH + fileInfo.getFileName().split("/")[0] + File.separator + fileInfo.getFileName().split("/")[1] ));
+                        uri = FileProvider.getUriForFile(getContext(), BuildConfig.APPLICATION_ID + ".fileProvider", new File(Data.DL_VIDEO_PATH + fileInfo.getFileName().split("/")[0] + File.separator + fileInfo.getFileName().split("/")[1]));
 
-                    }else {
+                    } else {
                         mp4Intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                        uri = Uri.fromFile(new File(Data.DL_VIDEO_PATH + fileInfo.getFileName().split("/")[0] + File.separator + fileInfo.getFileName().split("/")[1] ));
+                        uri = Uri.fromFile(new File(Data.DL_VIDEO_PATH + fileInfo.getFileName().split("/")[0] + File.separator + fileInfo.getFileName().split("/")[1]));
                     }
 
 
@@ -264,8 +262,6 @@ public class DownLoadFragment extends Fragment {
     }
 
 
-
-
     //接收广播，更新fileInfo，调用mAdapter的update方法
     class MyReceiver extends BroadcastReceiver {
 
@@ -276,11 +272,11 @@ public class DownLoadFragment extends Fragment {
 
             String action = intent.getAction();
 
-            if (action != null){
-                if (action.equals(DownloadService.FAIL)){
-                    Toast.makeText(getContext(),fileInfo.getFileName() + " 下载失败，请重试",Toast.LENGTH_SHORT).show();
-                }else if (action.equals(DownloadService.FINISH)){
-                    Toast.makeText(getContext(),fileInfo.getFileName() + " 下载成功",Toast.LENGTH_SHORT).show();
+            if (action != null) {
+                if (action.equals(DownloadService.FAIL)) {
+                    Toast.makeText(getContext(), fileInfo.getFileName() + " 下载失败，请重试", Toast.LENGTH_SHORT).show();
+                } else if (action.equals(DownloadService.FINISH)) {
+                    Toast.makeText(getContext(), fileInfo.getFileName() + " 下载成功", Toast.LENGTH_SHORT).show();
                 }
             }
 

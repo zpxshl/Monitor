@@ -12,6 +12,7 @@ import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.support.annotation.Nullable;
 import android.text.InputType;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,7 +22,6 @@ import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.Toast;
 
-
 import com.example.pxshl.yc_monitior.R;
 import com.example.pxshl.yc_monitior.activity.MainActivity;
 import com.example.pxshl.yc_monitior.activity.WifiActivity;
@@ -30,15 +30,13 @@ import com.example.pxshl.yc_monitior.net.tcp.TcpTool;
 import com.example.pxshl.yc_monitior.util.Data;
 import com.example.pxshl.yc_monitior.util.Tools;
 
-import javax.net.ssl.SSLEngine;
-
 import static android.content.Context.MODE_PRIVATE;
 
 /**
  * 登陆界面
  */
 
-public class LoginFragment1 extends Fragment{
+public class LoginFragment1 extends Fragment {
 
 
     private String account; //帐号
@@ -55,7 +53,7 @@ public class LoginFragment1 extends Fragment{
     }
 
     @Override   //兼容低版本安卓系统
-    public void onAttach(Activity activity){
+    public void onAttach(Activity activity) {
         super.onAttach(activity);
         mActivity = getActivity();
     }
@@ -71,8 +69,8 @@ public class LoginFragment1 extends Fragment{
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
 
-        if (mView == null){
-            mView = inflater.inflate(R.layout.fragment_login1,null);
+        if (mView == null) {
+            mView = inflater.inflate(R.layout.fragment_login1, null);
 
             final EditText accountEt = (EditText) mView.findViewById(R.id.account_et);
             final EditText passwordEt = (EditText) mView.findViewById(R.id.password_et);
@@ -87,7 +85,7 @@ public class LoginFragment1 extends Fragment{
                         passwordEt.setInputType(InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
                     } else {
                         //设置为不可见
-                        passwordEt.setInputType(InputType.TYPE_TEXT_VARIATION_PASSWORD |InputType.TYPE_CLASS_TEXT);
+                        passwordEt.setInputType(InputType.TYPE_TEXT_VARIATION_PASSWORD | InputType.TYPE_CLASS_TEXT);
                     }
                 }
             });
@@ -103,13 +101,11 @@ public class LoginFragment1 extends Fragment{
             });
 
 
-
-
             Button loginBtn = (Button) mView.findViewById(R.id.login_btn);
             loginBtn.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    String s= accountEt.getText().toString();
+                    String s = accountEt.getText().toString();
                     if (!accountEt.getText().toString().equals("") && !passwordEt.getText().toString().equals("")) {
                         account = accountEt.getText().toString();
                         password = passwordEt.getText().toString();
@@ -119,32 +115,35 @@ public class LoginFragment1 extends Fragment{
                         pd.setMessage("正在验证帐号密码，请稍后......");
                         pd.show();
 
-                        new TcpTool(Data.SERVER_IP,Data.SERVER_PORT1).connect(Data.LOGIN + " " +  account + " " + Tools.pwdToMd5(password),new RequestCallBack() {
+                        new TcpTool(Data.SERVER_IP, Data.SERVER_PORT1).connect(Data.LOGIN + " " + account + " " + Tools.pwdToMd5(password), new RequestCallBack() {
 
                             String msg = "";
 
                             @Override
                             public void onFinish(String response) {
-                                if (pd != null){
+                                if (pd != null) {
                                     pd.cancel();
                                 }
 
-                                if (response.equals("")){
+                                if (response.equals("")) {
                                     showMsg("服务器异常，请稍后重试");
+                                } else if (response.contains("no")) {
+                                    showMsg("帐号不存在");
                                 } else if (response.contains("true")) {
 
                                     String[] responses = response.split(" ");
 
-                                   try {  //防止服务器抽风，不按规定格式返回数据，加try catch
-                                       Data.alarm_sensitivity = Integer.decode(responses[2]);
+                                    try {  //防止服务器抽风，不按规定格式返回数据，加try catch
 
-                                       if (Long.decode(responses[3]) != -1){
-                                           Data.phone_num = responses[3];
-                                       }
+                                        Long phone = Long.decode(responses[2]);
+                                        Log.e("LoginF", phone + " ");
+                                        if (phone != -1 && responses[2].length() > 10) {
+                                            Data.phone_num = responses[2];
+                                        }
 
-                                   }catch (Exception e){
-                                       e.printStackTrace();
-                                   }
+                                    } catch (Exception e) {
+                                        e.printStackTrace();
+                                    }
 
                                     Data.isLogin = true;
                                     Data.account = account;
@@ -153,13 +152,13 @@ public class LoginFragment1 extends Fragment{
 
                                     if (rembPass.isChecked()) {
                                         //储存帐号密码
-                                        SharedPreferences preferences = getContext().getSharedPreferences("properties", MODE_PRIVATE);
+                                        SharedPreferences preferences = mActivity.getSharedPreferences("properties", MODE_PRIVATE);
                                         SharedPreferences.Editor editor = preferences.edit();
                                         editor.putString("account", account);
                                         editor.putString("password", password);
                                         editor.putBoolean("isLogin", true);
-                                        editor.putInt("alarm_sensitivity",Data.alarm_sensitivity);
-                                        editor.putString("phone_num",Data.phone_num);
+                                        //      editor.putInt("alarm_sensitivity",Data.alarm_sensitivity);
+                                        editor.putString("phone_num", Data.phone_num);
                                         editor.commit();
                                     }
 
@@ -172,25 +171,26 @@ public class LoginFragment1 extends Fragment{
                                     showMsg("帐号或密码错误，请重新输入");
                                 }
                             }
+
                             @Override
                             public void onError() {
                                 showMsg("联网验证失败，请稍后重试");
                             }
                         });
 
-                    }else {
-                        Toast.makeText(getContext(),"请输入完整的帐号和密码",Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(mActivity, "请输入完整的帐号和密码", Toast.LENGTH_SHORT).show();
                     }
                 }
             });
         }
 
 
-        ((Button)(mView.findViewById(R.id.btn_forget_pwd))).setOnClickListener(new View.OnClickListener() {
+        ((Button) (mView.findViewById(R.id.btn_forget_pwd))).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 
-                View layout = getActivity().getLayoutInflater().inflate(R.layout.dialog_forget_pwd,null);
+                View layout = getActivity().getLayoutInflater().inflate(R.layout.dialog_forget_pwd, null);
                 final EditText account = (EditText) layout.findViewById(R.id.et_account);
                 final EditText new1_pwd = (EditText) layout.findViewById(R.id.et_new1_pwd);
                 final EditText new2_pwd = (EditText) layout.findViewById(R.id.et_new2_pwd);
@@ -200,10 +200,10 @@ public class LoginFragment1 extends Fragment{
 
 
                 //倒计时控件
-                final CountDownTimer timer =  new CountDownTimer(60000, 1000) {
+                final CountDownTimer timer = new CountDownTimer(60000, 1000) {
                     @Override
                     public void onTick(long millisUntilFinished) {
-                        send.setText("重新发送： " + millisUntilFinished/1000 + "秒");
+                        send.setText("重新发送： " + millisUntilFinished / 1000 + "秒");
                     }
 
                     @Override
@@ -218,22 +218,22 @@ public class LoginFragment1 extends Fragment{
                     @Override
                     public void onClick(View v) {
 
-                        if (account.getText().toString().equals("")){
-                            Toast.makeText(getContext(),"请输入帐号",Toast.LENGTH_SHORT).show();
+                        if (account.getText().toString().equals("")) {
+                            Toast.makeText(mActivity, "请输入帐号", Toast.LENGTH_SHORT).show();
                             return;
                         }
 
-                       if (!new1_pwd.getText().toString().equals(new2_pwd.getText().toString())){
-                           Toast.makeText(getContext(),"新密码不一致，请重新输入",Toast.LENGTH_SHORT).show();
-                           return;
-                       }
+                        if (!new1_pwd.getText().toString().equals(new2_pwd.getText().toString())) {
+                            Toast.makeText(mActivity, "新密码不一致，请重新输入", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
 
-                       if (phone.getText().toString().length() != 11){
-                           Toast.makeText(getContext(),"请输入正确的手机号码",Toast.LENGTH_SHORT).show();
-                           return;
-                       }
+                        if (phone.getText().toString().length() != 11) {
+                            Toast.makeText(mActivity, "请输入正确的手机号码", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
 
-                        new TcpTool(Data.SERVER_IP,Data.SERVER_PORT2).connect(Data.SEND_PHONE + " " + account.getText().toString() + " " + phone.getText().toString(),null);
+                        new TcpTool(Data.SERVER_IP, Data.SERVER_PORT2).connect(Data.SEND_PHONE + " " + account.getText().toString() + " " + phone.getText().toString(), null);
                         send.setFocusable(false);
                         timer.start();
 
@@ -256,24 +256,24 @@ public class LoginFragment1 extends Fragment{
 
                 dialog_forget.show();
 
-                if (dialog_forget.getButton(AlertDialog.BUTTON_POSITIVE) != null){
+                if (dialog_forget.getButton(AlertDialog.BUTTON_POSITIVE) != null) {
                     dialog_forget.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
                             String captcha_number = captcha.getText().toString();
-                            if (captcha.equals("")){
-                                Toast.makeText(getContext(),"请输入验证码",Toast.LENGTH_SHORT).show();
-                            }else {
-                                new TcpTool(Data.SERVER_IP,Data.SERVER_PORT2).connect(Data.CHANGE_PWD_BY_CAPTCHA + " " + account.getText().toString() + " " + new1_pwd.getText().toString() +  " " + captcha_number, new RequestCallBack() {
+                            if (captcha.equals("")) {
+                                Toast.makeText(mActivity, "请输入验证码", Toast.LENGTH_SHORT).show();
+                            } else {
+                                new TcpTool(Data.SERVER_IP, Data.SERVER_PORT2).connect(Data.CHANGE_PWD_BY_CAPTCHA + " " + account.getText().toString() + " " + new1_pwd.getText().toString() + " " + captcha_number, new RequestCallBack() {
                                     @Override
                                     public void onFinish(String response) {
-                                        if (response.equals("")){
+                                        if (response.equals("")) {
                                             showMsg("服务器异常，请稍后在尝试");
-                                        }else if (response.contains("true")){
+                                        } else if (response.contains("true")) {
                                             showMsg("验证成功");
 
                                             timer.cancel();
-                                            if (mActivity != null){
+                                            if (mActivity != null) {
                                                 mActivity.runOnUiThread(new Runnable() {
                                                     @Override
                                                     public void run() {
@@ -282,10 +282,9 @@ public class LoginFragment1 extends Fragment{
                                                 });
                                             }
 
-                                        }else {
+                                        } else {
                                             showMsg("验证码错误，请输入正确的验证码");
                                         }
-
 
 
                                     }
@@ -312,7 +311,7 @@ public class LoginFragment1 extends Fragment{
             mActivity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    Toast.makeText(getContext(), msg, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(mActivity, msg, Toast.LENGTH_SHORT).show();
                     if (pd != null) {
                         pd.cancel();
                     }

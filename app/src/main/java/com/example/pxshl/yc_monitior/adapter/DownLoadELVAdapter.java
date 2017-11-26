@@ -23,11 +23,9 @@ import java.io.File;
 import java.util.List;
 import java.util.Map;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
 
 /**
- *下载界面对应的ListView的适配器
+ * 下载界面对应的ListView的适配器
  */
 
 public class DownLoadELVAdapter extends BaseExpandableListAdapter {
@@ -40,13 +38,14 @@ public class DownLoadELVAdapter extends BaseExpandableListAdapter {
 
     /**
      * 构造方法
+     *
      * @param context
      * @param groupsList
      * @param childsMap
      */
-    public DownLoadELVAdapter (Context context,
-                                      List<String> groupsList, Map<Integer, List<FileInfo>> childsMap) {
-        this.mContext= context;
+    public DownLoadELVAdapter(Context context,
+                              List<String> groupsList, Map<Integer, List<FileInfo>> childsMap) {
+        this.mContext = context;
         this.mGroupsList = groupsList;
         this.mChildsMap = childsMap;
     }
@@ -98,11 +97,13 @@ public class DownLoadELVAdapter extends BaseExpandableListAdapter {
         GroupsViewHolder groupsViewHolder = null;
         if (view == null) {
             view = LayoutInflater.from(mContext).inflate(R.layout.groups_download, null);
-            groupsViewHolder = new GroupsViewHolder(view);
+            groupsViewHolder = new GroupsViewHolder();
+            groupsViewHolder.groupsTv = (TextView) view.findViewById(R.id.group_download_tv);
             view.setTag(groupsViewHolder);
         } else {
             groupsViewHolder = (GroupsViewHolder) view.getTag();
         }
+
         groupsViewHolder.groupsTv.setText(mGroupsList.get(i).toString());
         return view;
     }
@@ -113,7 +114,10 @@ public class DownLoadELVAdapter extends BaseExpandableListAdapter {
         final FileInfo fileInfo = mChildsMap.get(i).get(i1);
         if (view == null) {
             view = LayoutInflater.from(mContext).inflate(R.layout.childs_download, null);
-            childsViewHolder = new ChildsViewHolder(view);
+            childsViewHolder = new ChildsViewHolder();
+            childsViewHolder.childsTv = (TextView) view.findViewById(R.id.childs_tv);
+            childsViewHolder.delBtn = (ImageButton) view.findViewById(R.id.del_btn);
+            childsViewHolder.progressBar = (ProgressBar) view.findViewById(R.id.progress_bar);
             childsViewHolder.progressBar.setMax(100);
             view.setTag(childsViewHolder);
         } else {
@@ -127,7 +131,7 @@ public class DownLoadELVAdapter extends BaseExpandableListAdapter {
             childsViewHolder.delBtn.setVisibility(View.VISIBLE);
         } else {
             if (fileInfo.getLength() != 0) {
-                childsViewHolder.progressBar.setProgress((int)(fileInfo.getFinished()*100/fileInfo.getLength()));
+                childsViewHolder.progressBar.setProgress((int) (fileInfo.getFinished() * 100 / fileInfo.getLength()));
                 childsViewHolder.progressBar.setVisibility(View.VISIBLE);
             } else {
                 //长度为０，说明未下载，将pb和删除按钮隐藏起来
@@ -143,23 +147,23 @@ public class DownLoadELVAdapter extends BaseExpandableListAdapter {
         childsViewHolder.delBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-              new AlertDialog.Builder(mContext).setTitle("是否删除" + fileInfo.getFileName()+"?")
-               .setPositiveButton("确定", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        File file = new File(Data.DL_VIDEO_PATH + fileInfo.getFileName().split("/")[0], fileInfo.getFileName().split("/")[1]);
-                        if (file.exists()) {
-                            file.delete();
-                        }
-                        fileInfo.setFinish(false);
-                        fileInfo.setDownloading(false);
-                        fileInfo.setFinished(0);
-                        fileInfo.setLength(0);
+                new AlertDialog.Builder(mContext).setTitle("是否删除" + fileInfo.getFileName() + "?")
+                        .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                File file = new File(Data.DL_VIDEO_PATH + fileInfo.getFileName().split("/")[0], fileInfo.getFileName().split("/")[1]);
+                                if (file.exists()) {
+                                    file.delete();
+                                }
+                                fileInfo.setFinish(false);
+                                fileInfo.setDownloading(false);
+                                fileInfo.setFinished(0);
+                                fileInfo.setLength(0);
 
-                        Toast.makeText(mContext, fileInfo.getFileName()+"删除成功", Toast.LENGTH_SHORT).show();
-                        childsViewHolder.delBtn.setVisibility(View.GONE);
-                    }
-                }).setNegativeButton("取消",null).setCancelable(false).show();
+                                Toast.makeText(mContext, fileInfo.getFileName() + "删除成功", Toast.LENGTH_SHORT).show();
+                                childsViewHolder.delBtn.setVisibility(View.GONE);
+                            }
+                        }).setNegativeButton("取消", null).setCancelable(false).show();
                 Log.d("TAG", "delbtn clicked");
             }
         });
@@ -173,16 +177,15 @@ public class DownLoadELVAdapter extends BaseExpandableListAdapter {
     public void update(FileInfo fileInfo) {
 
         try {    //try语句 避免当atcivity被回收 or 刷新列表后，启动时崩溃（mChildsMap.get(fileInfo.getI()).get(fileInfo.getI1())返回null）
-            FileInfo mFileInfo =  mChildsMap.get(fileInfo.getI()).get(fileInfo.getI1());
+            FileInfo mFileInfo = mChildsMap.get(fileInfo.getI()).get(fileInfo.getI1());
             mFileInfo.setFinished(fileInfo.getFinished());
             mFileInfo.setLength(fileInfo.getLength());
             mFileInfo.setFinish(fileInfo.isFinish());
             mFileInfo.setDownloading(fileInfo.isDownloading());
             notifyDataSetChanged();
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
-
 
 
     }
@@ -192,27 +195,17 @@ public class DownLoadELVAdapter extends BaseExpandableListAdapter {
      * 一级标题的ViewHolder
      */
     static class GroupsViewHolder {
-        @BindView(R.id.group_download_tv)
         TextView groupsTv;
-
-        public GroupsViewHolder(View view) {
-            ButterKnife.bind(this, view);
-        }
     }
+
     /**
      * 二级标题的ViewHolder
      */
-   static class ChildsViewHolder {
-        @BindView(R.id.childs_tv)
-        TextView childsTv;
-        @BindView(R.id.progress_bar)
-        ProgressBar progressBar;
-        @BindView(R.id.del_btn)
-        ImageButton delBtn;
+    static class ChildsViewHolder {
 
-        public ChildsViewHolder(View view) {
-            ButterKnife.bind(this, view);
-        }
+        TextView childsTv;
+        ProgressBar progressBar;
+        ImageButton delBtn;
 
     }
 

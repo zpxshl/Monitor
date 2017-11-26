@@ -6,11 +6,17 @@
     xmlns:android="http://schemas.android.com/apk/res/android">
 
     <TextView
+        android:id="@+id/blank_tv"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:textSize="20sp"/>
+
+    <TextView
         android:id="@+id/wifi_explain_tv"
-        android:visibility="invisible"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="请在下面列表点击您的wifi，并输入密码，app会配置监控器连接该wifi"
+        android:text="请点击您的wifi，输入密码，app会配置监控器连接该wifi"
         android:textSize="25sp"
         android:gravity="center"/>
 

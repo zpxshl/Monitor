@@ -23,25 +23,25 @@ public class LoginActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
-
+       
         changeFragment();
     }
 
     /**
      * 根据时候登陆，切换不同的界面
      */
-    public void changeFragment(){
+    public void changeFragment() {
         FragmentManager manager = getFragmentManager();
         FragmentTransaction transaction = manager.beginTransaction();
 
         Fragment fragment;
-        if (Data.isLogin == true){
+        if (Data.isLogin) {
             fragment = new LoginFragment2();  //退出账号，修改密码界面
-        }else {
+        } else {
             fragment = new LoginFragment1();  //登陆界面
         }
 
-        transaction.replace(R.id.activity_login,fragment);
+        transaction.replace(R.id.activity_login, fragment);
         transaction.commitAllowingStateLoss();
 
     }

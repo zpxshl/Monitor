@@ -3,10 +3,10 @@ package com.example.pxshl.yc_monitior.model;
 import java.io.Serializable;
 
 /**
- *文件信息类
+ * 文件信息类
  */
 
-public class FileInfo  implements Serializable {
+public class FileInfo implements Serializable {
     //文件id
     private int id;
     //文件名
@@ -84,7 +84,6 @@ public class FileInfo  implements Serializable {
     public long getFinished() {
         return finished;
     }
-
 
 
     public void setFinish(boolean finish) {

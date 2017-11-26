@@ -23,7 +23,7 @@
         android:layout_marginLeft="22dp"
         android:layout_marginRight="22dp"
         android:layout_marginTop="22dp"/>
-
+<!--
     <Button
         android:id="@+id/setAlram"
         android:layout_width="match_parent"
@@ -45,6 +45,7 @@
         android:layout_marginTop="22dp"
         android:max="100"
         android:visibility="invisible"/>
+        -->
 
 
 </LinearLayout>

@@ -20,7 +20,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- *后台下载
+ * 后台下载
  */
 
 public class DownloadService extends Service {
@@ -28,7 +28,7 @@ public class DownloadService extends Service {
     public static final String START_DOWNLOAD = "START_DOWNLOAD";
 
     public static final String UPDATE = "UPDATE";
-    public static final  String DELETE = "DELETE";
+    public static final String DELETE = "DELETE";
     public static final String FAIL = "FAIL";
     public static final String FINISH = "FINISH";
     //下载的文件保存路径
@@ -42,18 +42,22 @@ public class DownloadService extends Service {
 
         FileInfo fileInfo;
         try {
-            fileInfo = (FileInfo)intent.getSerializableExtra("fileInfo");    //某些情况会抛出异常，导致程序奔溃
-        }catch (Exception e){
+            fileInfo = (FileInfo) intent.getSerializableExtra("fileInfo");    //某些情况会抛出异常，导致程序奔溃
+        } catch (Exception e) {
             return super.onStartCommand(intent, flags, startId);
         }
 
 
-        if (intent.getAction().equals(START_DOWNLOAD)) {
-            initDownLoad(fileInfo);
-        } else if (intent.getAction().equals(DELETE)) {
-            DownloadTask task = mTasks.get(fileInfo.getId());
-            task.isCancel = true;
+        String action = intent.getAction();
+        if (action != null) {
+            if (action.equals(START_DOWNLOAD)) {
+                initDownLoad(fileInfo);
+            } else if (action.equals(DELETE)) {
+                DownloadTask task = mTasks.get(fileInfo.getId());
+                task.isCancel = true;
+            }
         }
+
 
         return super.onStartCommand(intent, flags, startId);
 
@@ -61,20 +65,20 @@ public class DownloadService extends Service {
 
     private void initDownLoad(final FileInfo fileInfo) {
 
-          new TcpTool(Data.SERVER_IP,Data.SERVER_PORT1).connect(Data.FILE_SIZE + " " + Data.account + " " + Tools.pwdToMd5(Data.password) + " " +   fileInfo.getFileName(),new RequestCallBack() {
+        new TcpTool(Data.SERVER_IP, Data.SERVER_PORT1).connect(Data.FILE_SIZE + " " + Data.account + " " + Tools.pwdToMd5(Data.password) + " " + fileInfo.getFileName(), new RequestCallBack() {
             @Override
             public void onFinish(String response) {
 
                 long fileSize;
-                try{
+                try {
                     //防止服务器抽风,返回错误数据
                     fileSize = Long.parseLong(response.trim());
-                }catch (NumberFormatException e){
+                } catch (NumberFormatException e) {
                     downloadFail(fileInfo);
-                    return ;
+                    return;
                 }
 
-                if (fileSize <= 0){
+                if (fileSize <= 0) {
                     downloadFail(fileInfo);
                     return;
                 }
@@ -99,11 +103,11 @@ public class DownloadService extends Service {
                 } catch (IOException e) {
                     downloadFail(fileInfo);
                     e.printStackTrace();
-                }finally {
-                    if (raf != null){
+                } finally {
+                    if (raf != null) {
                         try {
                             raf.close();
-                        }catch (IOException e){
+                        } catch (IOException e) {
                             e.printStackTrace();
                         }
                     }
@@ -123,7 +127,7 @@ public class DownloadService extends Service {
         return null;
     }
 
-    private void downloadFail(FileInfo fileInfo){
+    private void downloadFail(FileInfo fileInfo) {
         Intent intent = new Intent(DownloadService.FAIL);
         intent.putExtra("fileInfo", fileInfo);
         this.sendBroadcast(intent);

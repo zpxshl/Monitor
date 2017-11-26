@@ -27,7 +27,7 @@ import java.util.Map;
  * 对应报警界面的listView的塞佩琦
  */
 
-public class AlarmELVAdapter extends BaseExpandableListAdapter{
+public class AlarmELVAdapter extends BaseExpandableListAdapter {
 
 
     Context mContext;
@@ -82,12 +82,12 @@ public class AlarmELVAdapter extends BaseExpandableListAdapter{
 
         GroupViewHolder viewHolder = null;
 
-        if (convertView  == null){
-            convertView = LayoutInflater.from(mContext).inflate(R.layout.groups_alarm,null);
+        if (convertView == null) {
+            convertView = LayoutInflater.from(mContext).inflate(R.layout.groups_alarm, null);
             viewHolder = new GroupViewHolder();
             viewHolder.groupTv = (TextView) convertView.findViewById(R.id.group_alarm_tv);
             convertView.setTag(viewHolder);
-        }else {
+        } else {
             viewHolder = (GroupViewHolder) convertView.getTag();
         }
 
@@ -101,12 +101,12 @@ public class AlarmELVAdapter extends BaseExpandableListAdapter{
     public View getChildView(final int groupPosition, final int childPosition, boolean isLastChild, View convertView, ViewGroup parent) {
         ChildViewHolder viewHolder = null;
 
-        if (convertView == null){
-            convertView = LayoutInflater.from(mContext).inflate(R.layout.childs_alarm,null);
+        if (convertView == null) {
+            convertView = LayoutInflater.from(mContext).inflate(R.layout.childs_alarm, null);
             viewHolder = new ChildViewHolder();
             viewHolder.childIv = (ImageView) convertView.findViewById(R.id.child_alarm_iv);
             convertView.setTag(viewHolder);
-        }else {
+        } else {
             viewHolder = (ChildViewHolder) convertView.getTag();
         }
 
@@ -118,8 +118,8 @@ public class AlarmELVAdapter extends BaseExpandableListAdapter{
             public boolean onLongClick(View v) {
 
                 AlarmInfo info = mChildsMap.get(groupPosition).get(childPosition);
-                save_photo(info.getBitmap(),Data.DL_PHOTO_PATH,info.getTime());
-                Toast.makeText(mContext,"图片已保存到内置储存/monitor/photo",Toast.LENGTH_SHORT).show();
+                save_photo(info.getBitmap(), Data.DL_PHOTO_PATH, info.getTime());
+                Toast.makeText(mContext, "图片已保存到内置储存/monitor/photo", Toast.LENGTH_SHORT).show();
                 return true;
             }
         });
@@ -133,8 +133,6 @@ public class AlarmELVAdapter extends BaseExpandableListAdapter{
     }
 
 
-
-
     /**
      * 一级标题的ViewHolder
      */
@@ -142,33 +140,32 @@ public class AlarmELVAdapter extends BaseExpandableListAdapter{
         public TextView groupTv;
     }
 
-    static class ChildViewHolder{
+    static class ChildViewHolder {
         public ImageView childIv;
     }
 
 
     /**
-     *
-     * @param bitmap 图片对应的bitmap
-     * @param dir    保存的位置
-     * @param fileName  保存的文件名
+     * @param bitmap   图片对应的bitmap
+     * @param dir      保存的位置
+     * @param fileName 保存的文件名
      */
-    private void save_photo(Bitmap bitmap,String dir,String fileName){
-        File d= new File(dir);
-        if (!d.exists()){
+    private void save_photo(Bitmap bitmap, String dir, String fileName) {
+        File d = new File(dir);
+        if (!d.exists()) {
             d.mkdirs();
         }
 
         OutputStream out = null;
         try {
-            out = new FileOutputStream( new File(dir + File.separator + fileName + ".jpg"));
-            bitmap.compress(Bitmap.CompressFormat.JPEG,100,out);
-        }catch (IOException e){
+            out = new FileOutputStream(new File(dir + File.separator + fileName + ".jpg"));
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out);
+        } catch (IOException e) {
             e.printStackTrace();
-        }finally {
+        } finally {
             try {
                 out.close();
-            }catch (Exception e){
+            } catch (Exception e) {
                 e.printStackTrace();
             }
 
