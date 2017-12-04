@@ -37,8 +37,7 @@ import io.reactivex.functions.Consumer;
 
 public class WifiActivity extends AppCompatActivity {
 
-    private static final String MonitorWifiName = "TP-LINK_5G_FAE3"; //监控器的wifi名
-    //"Pi3-AP"
+    private static final String MonitorWifiName = "haotaitai"; //监控器的wifi名
 
     private WifiManager mWifiManager;
     private TextView mBlankTV;
@@ -225,7 +224,7 @@ public class WifiActivity extends AppCompatActivity {
 
     public void sendToMonitor(final String msg) {
 
-        showMsg("请稍等十秒，不要退出APP");
+        showMsg("请稍等15秒，不要退出APP");
 
         new TcpTool(Data.MONITOR_WIFI_IP, Data.MONITOR_PORT2).connect(msg, new RequestCallBack() {
             @Override
@@ -233,6 +232,8 @@ public class WifiActivity extends AppCompatActivity {
 
                 showMsg("请观察监控器的绿灯是否亮，绿灯亮则说明监控器已经连接上wifi"
                         + "如果15秒后监控器绿灯没有亮，请重新配置监控器");
+
+                //储存BSSID
 
             }
 

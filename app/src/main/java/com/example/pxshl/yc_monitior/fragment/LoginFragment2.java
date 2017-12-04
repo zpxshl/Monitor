@@ -23,6 +23,7 @@ import android.widget.Toast;
 
 import com.example.pxshl.yc_monitior.R;
 import com.example.pxshl.yc_monitior.activity.LoginActivity;
+import com.example.pxshl.yc_monitior.application.MyApplication;
 import com.example.pxshl.yc_monitior.inyerface.RequestCallBack;
 import com.example.pxshl.yc_monitior.net.tcp.TcpTool;
 import com.example.pxshl.yc_monitior.util.Data;
@@ -119,7 +120,7 @@ public class LoginFragment2 extends Fragment {
         Data.account = "";
         Data.password = "";
 
-        Toast.makeText(mActivity, "登出成功", Toast.LENGTH_SHORT).show();
+        Toast.makeText(MyApplication.getContext(), "登出成功", Toast.LENGTH_SHORT).show();
         ((LoginActivity) getActivity()).changeFragment();
     }
 
@@ -168,7 +169,7 @@ public class LoginFragment2 extends Fragment {
                                             showMsg("修改密码成功,请重新登陆");
 
                                             //清除原本储存的数据
-                                            SharedPreferences preferences = mActivity.getSharedPreferences("properties", MODE_PRIVATE);
+                                            SharedPreferences preferences = MyApplication.getContext().getSharedPreferences("properties", MODE_PRIVATE);
                                             SharedPreferences.Editor editor = preferences.edit();
                                             editor.clear();
                                             editor.commit();
@@ -237,7 +238,7 @@ public class LoginFragment2 extends Fragment {
             public void onClick(View v) {
                 phone_number = phone.getText().toString();
                 if (phone_number.length() != 11) {
-                    Toast.makeText(mActivity, "请输入正确的手机号码", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MyApplication.getContext(), "请输入正确的手机号码", Toast.LENGTH_SHORT).show();
                 } else {
 
                     new TcpTool(Data.SERVER_IP, Data.SERVER_PORT2).connect(Data.SEND_PHONE + " " + Data.account + " " + Tools.pwdToMd5(Data.password) + " " + phone_number, null);
@@ -269,7 +270,7 @@ public class LoginFragment2 extends Fragment {
                 public void onClick(View v) {
                     String captcha_number = captcha.getText().toString();
                     if (captcha.equals("")) {
-                        Toast.makeText(mActivity, "请输入验证码", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(MyApplication.getContext(), "请输入验证码", Toast.LENGTH_SHORT).show();
                     } else {
                         new TcpTool(Data.SERVER_IP, Data.SERVER_PORT2).connect(Data.CAPTCHA + " " + Data.account + " " + Tools.pwdToMd5(Data.password) + " " + phone_number + " " + captcha_number, new RequestCallBack() {
                             @Override

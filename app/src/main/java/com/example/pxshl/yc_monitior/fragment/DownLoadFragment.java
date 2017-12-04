@@ -1,16 +1,19 @@
 package com.example.pxshl.yc_monitior.fragment;
 
 import android.app.Activity;
+import android.app.Application;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.FileProvider;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -24,6 +27,7 @@ import android.widget.Toast;
 import com.example.pxshl.yc_monitior.BuildConfig;
 import com.example.pxshl.yc_monitior.R;
 import com.example.pxshl.yc_monitior.adapter.DownLoadELVAdapter;
+import com.example.pxshl.yc_monitior.application.MyApplication;
 import com.example.pxshl.yc_monitior.inyerface.RequestCallBack;
 import com.example.pxshl.yc_monitior.model.FileInfo;
 import com.example.pxshl.yc_monitior.net.tcp.TcpTool;
@@ -71,7 +75,8 @@ public class DownLoadFragment extends Fragment {
         intentFilter.addAction(DownloadService.UPDATE);
         intentFilter.addAction(DownloadService.FAIL);
         intentFilter.addAction(DownloadService.FINISH);
-        mActivity.registerReceiver(mReceiver, intentFilter);
+
+        LocalBroadcastManager.getInstance(MyApplication.getContext()).registerReceiver(mReceiver,intentFilter);
 
         if (mView == null) {
             mView = inflater.inflate(R.layout.fragment_download, null);
@@ -103,7 +108,8 @@ public class DownLoadFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        mActivity.unregisterReceiver(mReceiver);
+        LocalBroadcastManager.getInstance(MyApplication.getContext()).unregisterReceiver(mReceiver);
+
     }
 
 
@@ -121,11 +127,14 @@ public class DownLoadFragment extends Fragment {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 if (event.getAction() == MotionEvent.ACTION_MOVE) {
-                    if (mListView.getFirstVisiblePosition() == 0 && mListView.getChildAt(0).getTop() >= mListView.getListPaddingTop()) {
-                        mSRL.setEnabled(true);
-                    } else {
-                        mSRL.setEnabled(false);
+                    if (mListView.getCount() > 0){
+                        if (mListView.getFirstVisiblePosition() == 0 && mListView.getChildAt(0).getTop() >= mListView.getListPaddingTop()) {
+                            mSRL.setEnabled(true);
+                        } else {
+                            mSRL.setEnabled(false);
+                        }
                     }
+
                 }
                 return false;
             }
@@ -137,8 +146,10 @@ public class DownLoadFragment extends Fragment {
         mSRL.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
+
                 groupsList.clear();         //刷新，先清除现有数据
                 childMap.clear();
+             //   mAdapter.notifyDataSetChanged();
                 loadFileList();
             }
         });
@@ -235,25 +246,6 @@ public class DownLoadFragment extends Fragment {
                     intent.putExtra("fileInfo", fileInfo);
                     mActivity.startService(intent);
                     Toast.makeText(getContext(), fileInfo.getFileName() + "停止下载", Toast.LENGTH_SHORT).show();
-                } else if (fileInfo.isFinish()) {
-                    //播放视频，启动系统的播放器进行播放
-                    Intent mp4Intent = new Intent("android.intent.action.VIEW");
-                    Uri uri;
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) { //安卓N或以上
-                        mp4Intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                        uri = FileProvider.getUriForFile(getContext(), BuildConfig.APPLICATION_ID + ".fileProvider", new File(Data.DL_VIDEO_PATH + fileInfo.getFileName().split("/")[0] + File.separator + fileInfo.getFileName().split("/")[1]));
-
-                    } else {
-                        mp4Intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                        uri = Uri.fromFile(new File(Data.DL_VIDEO_PATH + fileInfo.getFileName().split("/")[0] + File.separator + fileInfo.getFileName().split("/")[1]));
-                    }
-
-
-                    mp4Intent.putExtra("oneshot", 0);
-                    mp4Intent.putExtra("configchange", 0);
-                    mp4Intent.setDataAndType(uri, "video/*");
-                    startActivity(mp4Intent);
-
                 }
 
                 return true;

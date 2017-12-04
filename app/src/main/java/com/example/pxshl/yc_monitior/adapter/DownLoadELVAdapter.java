@@ -3,6 +3,12 @@ package com.example.pxshl.yc_monitior.adapter;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.media.Image;
+import android.net.Uri;
+import android.os.Build;
+import android.os.IBinder;
+import android.support.v4.content.FileProvider;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,7 +20,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 
+import com.example.pxshl.yc_monitior.BuildConfig;
 import com.example.pxshl.yc_monitior.R;
+import com.example.pxshl.yc_monitior.application.MyApplication;
 import com.example.pxshl.yc_monitior.model.FileInfo;
 import com.example.pxshl.yc_monitior.service.DownloadService;
 import com.example.pxshl.yc_monitior.util.Data;
@@ -117,6 +125,7 @@ public class DownLoadELVAdapter extends BaseExpandableListAdapter {
             childsViewHolder = new ChildsViewHolder();
             childsViewHolder.childsTv = (TextView) view.findViewById(R.id.childs_tv);
             childsViewHolder.delBtn = (ImageButton) view.findViewById(R.id.del_btn);
+            childsViewHolder.playBtn = (ImageButton)view.findViewById(R.id.play_btn);
             childsViewHolder.progressBar = (ProgressBar) view.findViewById(R.id.progress_bar);
             childsViewHolder.progressBar.setMax(100);
             view.setTag(childsViewHolder);
@@ -129,6 +138,7 @@ public class DownLoadELVAdapter extends BaseExpandableListAdapter {
             //如果下载完成并将progressbar设置为gone，显示可以删除的按钮，并提示用户下载完成
             childsViewHolder.progressBar.setVisibility(View.GONE);
             childsViewHolder.delBtn.setVisibility(View.VISIBLE);
+            childsViewHolder.playBtn.setVisibility(View.VISIBLE);
         } else {
             if (fileInfo.getLength() != 0) {
                 childsViewHolder.progressBar.setProgress((int) (fileInfo.getFinished() * 100 / fileInfo.getLength()));
@@ -137,6 +147,7 @@ public class DownLoadELVAdapter extends BaseExpandableListAdapter {
                 //长度为０，说明未下载，将pb和删除按钮隐藏起来
                 childsViewHolder.progressBar.setVisibility(View.GONE);
                 childsViewHolder.delBtn.setVisibility(View.GONE);
+                childsViewHolder.playBtn.setVisibility(View.GONE);
             }
         }
         /**
@@ -162,11 +173,36 @@ public class DownLoadELVAdapter extends BaseExpandableListAdapter {
 
                                 Toast.makeText(mContext, fileInfo.getFileName() + "删除成功", Toast.LENGTH_SHORT).show();
                                 childsViewHolder.delBtn.setVisibility(View.GONE);
+                                childsViewHolder.delBtn.setVisibility(View.GONE);
                             }
                         }).setNegativeButton("取消", null).setCancelable(false).show();
                 Log.d("TAG", "delbtn clicked");
             }
         });
+
+        childsViewHolder.playBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                //播放视频，启动系统的播放器进行播放
+                Intent mp4Intent = new Intent("android.intent.action.VIEW");
+                Uri uri;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) { //安卓N或以上
+                    mp4Intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    uri = FileProvider.getUriForFile(MyApplication.getContext(), BuildConfig.APPLICATION_ID + ".fileProvider", new File(Data.DL_VIDEO_PATH + fileInfo.getFileName().split("/")[0] + File.separator + fileInfo.getFileName().split("/")[1]));
+
+                } else {
+                    mp4Intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                    uri = Uri.fromFile(new File(Data.DL_VIDEO_PATH + fileInfo.getFileName().split("/")[0] + File.separator + fileInfo.getFileName().split("/")[1]));
+                }
+
+
+                mp4Intent.putExtra("oneshot", 0);
+                mp4Intent.putExtra("configchange", 0);
+                mp4Intent.setDataAndType(uri, "video/*");
+                mContext.startActivity(mp4Intent);
+            }
+        });
+
         return view;
     }
 
@@ -187,7 +223,6 @@ public class DownLoadELVAdapter extends BaseExpandableListAdapter {
             e.printStackTrace();
         }
 
-
     }
 
 
@@ -206,6 +241,7 @@ public class DownLoadELVAdapter extends BaseExpandableListAdapter {
         TextView childsTv;
         ProgressBar progressBar;
         ImageButton delBtn;
+        ImageButton playBtn;
 
     }
 

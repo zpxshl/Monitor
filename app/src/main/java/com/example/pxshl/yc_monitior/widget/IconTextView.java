@@ -7,6 +7,7 @@ import android.util.AttributeSet;
 
 /**
  * Created by pxshl on 2017/7/29.
+ * 设置wifi界面 显示wifi强度的图片
  */
 
 public class IconTextView extends AppCompatTextView {

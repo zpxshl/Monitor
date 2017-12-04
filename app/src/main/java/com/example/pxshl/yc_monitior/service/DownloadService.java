@@ -4,8 +4,10 @@ import android.app.Service;
 import android.content.Intent;
 import android.os.Environment;
 import android.os.IBinder;
+import android.support.v4.content.LocalBroadcastManager;
 
 
+import com.example.pxshl.yc_monitior.application.MyApplication;
 import com.example.pxshl.yc_monitior.inyerface.RequestCallBack;
 import com.example.pxshl.yc_monitior.model.FileInfo;
 import com.example.pxshl.yc_monitior.net.tcp.TcpTool;
@@ -82,6 +84,12 @@ public class DownloadService extends Service {
                     downloadFail(fileInfo);
                     return;
                 }
+
+                try {
+                    Thread.sleep(500); //服务器要求
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
                 RandomAccessFile raf = null;
                 fileInfo.setLength(fileSize);
 
@@ -130,7 +138,7 @@ public class DownloadService extends Service {
     private void downloadFail(FileInfo fileInfo) {
         Intent intent = new Intent(DownloadService.FAIL);
         intent.putExtra("fileInfo", fileInfo);
-        this.sendBroadcast(intent);
+        LocalBroadcastManager.getInstance(MyApplication.getContext()).sendBroadcast(intent);
     }
 
 }

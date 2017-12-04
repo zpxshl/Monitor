@@ -71,6 +71,7 @@ public class RtpSocket {
 	public void receive(RtpPacket rtpp) throws IOException {
 		datagram.setData(rtpp.packet);
 		datagram.setLength(rtpp.packet.length);
+
 		socket.receive(datagram);
 		if (!socket.isConnected())
 			socket.connect(datagram.getAddress(),datagram.getPort());

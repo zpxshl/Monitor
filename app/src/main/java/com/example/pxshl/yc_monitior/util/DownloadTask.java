@@ -2,7 +2,9 @@ package com.example.pxshl.yc_monitior.util;
 
 import android.content.Context;
 import android.content.Intent;
+import android.support.v4.content.LocalBroadcastManager;
 
+import com.example.pxshl.yc_monitior.application.MyApplication;
 import com.example.pxshl.yc_monitior.model.FileInfo;
 import com.example.pxshl.yc_monitior.service.DownloadService;
 
@@ -34,6 +36,8 @@ public class DownloadTask extends Thread {
     @Override
     public void run() {
 
+
+
         OutputStream os = null;
         BufferedInputStream in = null;
         // 下载是按天数分类，一天为一个文件夹，方便用户分时间段查看
@@ -43,6 +47,7 @@ public class DownloadTask extends Thread {
 
         try {
             mSocket = new Socket(Data.SERVER_IP, Data.SERVER_PORT1);
+            mSocket.setSoTimeout(5000);
             //输出
             os = mSocket.getOutputStream();
             byte[] out_buff = (Data.DOWNLOAD + " " + Data.account + " " + Tools.pwdToMd5(Data.password) + " " + mFileInfo.getFileName() + '\n').getBytes();
@@ -73,7 +78,7 @@ public class DownloadTask extends Thread {
                 if (System.currentTimeMillis() - lastTime > 500) {
                     mFileInfo.setFinished(finished);
                     intent.putExtra("fileInfo", mFileInfo);     //设置频率发送广播
-                    mContext.sendBroadcast(intent);
+                    LocalBroadcastManager.getInstance(MyApplication.getContext()).sendBroadcast(intent);
                     lastTime = System.currentTimeMillis();
                 }
             }
@@ -118,7 +123,7 @@ public class DownloadTask extends Thread {
         mFileInfo.setLength(0);
         Intent intent = new Intent(DownloadService.FAIL);
         intent.putExtra("fileInfo", mFileInfo);
-        mContext.sendBroadcast(intent);
+        LocalBroadcastManager.getInstance(MyApplication.getContext()).sendBroadcast(intent);
 
     }
 
@@ -127,7 +132,7 @@ public class DownloadTask extends Thread {
         mFileInfo.setDownloading(false);
         Intent intent = new Intent(DownloadService.FINISH);
         intent.putExtra("fileInfo", mFileInfo);
-        mContext.sendBroadcast(intent);
+        LocalBroadcastManager.getInstance(MyApplication.getContext()).sendBroadcast(intent);
     }
 }
 

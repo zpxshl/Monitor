@@ -10,6 +10,7 @@ import com.example.pxshl.yc_monitior.util.Data;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.Socket;
 
 /**
  * Created by pxshl on 2017/7/28.
@@ -23,19 +24,22 @@ public class UdpTool {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                DatagramSocket dSocket = null;
-                DatagramPacket dPacket = null;
-                try {
-                    dPacket = new DatagramPacket(msg.getBytes(),msg.length(), InetAddress.getByName(ip),port);
-                    dSocket = new DatagramSocket();
+
+                try (DatagramSocket dSocket = new DatagramSocket())
+                {
+                    DatagramPacket dPacket = new DatagramPacket(msg.getBytes(),msg.length(), InetAddress.getByName(ip),port);
                     Data.Local_UDP_PORT = dSocket.getLocalPort();  //服务器返回的数据是原路返回的,端口必须一样
                     //发送三个包，防止丢包
                     for (int i = 0 ;i < 3 ;i++){
                         dSocket.send(dPacket);
                     }
 
+                    Log.e("UDP SEND ", msg);
 
-                    Log.e("UDP SEND " , Data.Local_UDP_PORT + " " + msg);
+                    dSocket.setSoTimeout(3000);
+                    dSocket.receive(dPacket);
+
+                    Data.MONITOR_IP = dPacket.getAddress(); //获得对方ip
 
                     if (callBack != null){
                         if (dSocket != null){
@@ -49,11 +53,6 @@ public class UdpTool {
                     e.printStackTrace();
                     if (callBack != null){
                         callBack.onError();
-                    }
-
-                }finally {
-                    if (dSocket != null){
-                        dSocket.close();
                     }
                 }
             }

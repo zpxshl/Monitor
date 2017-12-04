@@ -7,7 +7,7 @@ import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.widget.SwipeRefreshLayout;
-import android.util.LruCache;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -28,11 +28,14 @@ import android.widget.Toast;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.lang.ref.WeakReference;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * 该碎片会展示报警的图片
@@ -49,15 +52,25 @@ public class AlarmFragment extends Fragment {
     private AlarmELVAdapter mAdapter;    //适配器
     private List<String> groupsList = new ArrayList<>(); //一级列表
     private Map<Integer, List<AlarmInfo>> childMap = new HashMap<>(); //二级列表
-    private boolean[] hasLoad;   //储存是否已经加载了图片的布尔数组，避免多次加载图片
 
-    LruCache<Integer, ArrayList<Bitmap>> mLruCache = new LruCache<>((int) Runtime.getRuntime().totalMemory());
+
+    //通过mData判断子项信息是否加载完
+    private List<List<String>> mData = new ArrayList<>();//代会再补充注释
+
+
+    private AtomicBoolean[] isLoadings; //线程安全 可修改为退出应用也将其改为false
+
+    private static LoadBitmap mLoad;
+
+
 
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
         mActivity = getActivity();
     }
+
+
 
     @Override   //兼容低版本安卓系统
     public void onAttach(Activity activity) {
@@ -77,6 +90,8 @@ public class AlarmFragment extends Fragment {
         setRetainInstance(true);
     }
 
+
+
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
@@ -91,10 +106,12 @@ public class AlarmFragment extends Fragment {
 
     private void init() {
 
+        mLoad = new LoadBitmap(this);
+
         mTextView = (TextView) mView.findViewById(R.id.alarmFrag_empty_tv);
         mSRL = (SwipeRefreshLayout) mView.findViewById(R.id.alarm_frag_srl);
         final ExpandableListView listView = (ExpandableListView) mView.findViewById(R.id.frag_alarm_listView);
-        mAdapter = new AlarmELVAdapter(getContext(), groupsList, childMap);
+        mAdapter = new AlarmELVAdapter(getContext(),mLoad,mData,groupsList, childMap);
         listView.setAdapter(mAdapter);
         listView.setEmptyView(mTextView);
         loadGroupsInfo();
@@ -107,29 +124,68 @@ public class AlarmFragment extends Fragment {
             }
         });
 
+        listView.setOnGroupCollapseListener(new ExpandableListView.OnGroupCollapseListener() {
+            @Override
+            public void onGroupCollapse(int groupPosition) {
+                isLoadings[groupPosition].set(false);
+            }
+        });
+
         listView.setOnTouchListener(new View.OnTouchListener() {    //避免refreshLayout错误消费了ListView的滑动事件 当设置了EmptyView时会出现这问题
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 if (event.getAction() == MotionEvent.ACTION_MOVE) {
-                    if (listView.getFirstVisiblePosition() == 0 && listView.getChildAt(0).getTop() >= listView.getListPaddingTop()) {
-                        mSRL.setEnabled(true);
-                    } else {
-                        mSRL.setEnabled(false);
+
+                    if (listView.getCount() > 0) {
+                        if (listView.getFirstVisiblePosition() == 0 && listView.getChildAt(0).getTop() >= listView.getListPaddingTop()) {
+                            mSRL.setEnabled(true);
+                        } else {
+                            mSRL.setEnabled(false);
+                        }
                     }
+
                 }
                 return false;
             }
         });
 
+
         mSRL.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                groupsList.clear();         //刷新，先清除现有数据
-                childMap.clear();
-                loadGroupsInfo();
+
+                if (!isLoading()) {
+
+                    groupsList.clear();         //刷新，先清除现有数据
+                    childMap.clear();
+                    System.gc();
+                    //  mAdapter.notifyDataSetChanged();
+                    loadGroupsInfo();
+
+                } else {
+                    mSRL.setRefreshing(false);
+                }
+
+
             }
         });
 
+    }
+
+    private boolean isLoading() {
+
+        if (isLoadings == null || 0 == isLoadings.length) {
+            return false;
+        }
+
+        for (AtomicBoolean ab : isLoadings) {
+            if (ab.get()) {
+                return true;
+            }
+        }
+
+
+        return false;
     }
 
     private void loadGroupsInfo() {
@@ -148,14 +204,19 @@ public class AlarmFragment extends Fragment {
                 } else if (response.contains("no photo")) {
                     showMsg("恭喜您，没有异常的报警信息~");
                 } else {
+
                     String[] dates = response.split(" ");
+
+
+                    isLoadings = new AtomicBoolean[dates.length];
 
                     for (int i = 0; i < dates.length; i++) {
                         groupsList.add(dates[i]);
                         childMap.put(i, new ArrayList<AlarmInfo>());
+                        isLoadings[i] = new AtomicBoolean(false);
+                        mData.add(new ArrayList<String>());
                     }
 
-                    hasLoad = new boolean[dates.length];
 
                     if (mActivity != null) {
                         mActivity.runOnUiThread(new Runnable() {
@@ -166,7 +227,10 @@ public class AlarmFragment extends Fragment {
                             }
                         });
                     }
+
+
                 }
+
 
             }
 
@@ -179,66 +243,35 @@ public class AlarmFragment extends Fragment {
     }
 
     //加载图片
-    private void loadChildsInfo(final int groupPosition) {
-        final String date = groupsList.get(groupPosition);
 
-        if (hasLoad[groupPosition]) {  //已经加载过了
+    private void loadChildsInfo(final int groupPosition) {
+
+        if (mData.get(groupPosition).size() != 0){  //说明已经加载过数据了
             return;
         }
 
-        new TcpTool(Data.SERVER_IP, Data.SERVER_PORT1).connect(Data.PHOTO_DATE + " " + Data.account + " " + Tools.pwdToMd5(Data.password) + " " + date, new RequestCallBack() {
+        new TcpTool(Data.SERVER_IP, Data.SERVER_PORT1).connect(Data.PHOTO_DATE + " " + Data.account + " " + Tools.pwdToMd5(Data.password) + " " + groupsList.get(groupPosition), new RequestCallBack() {
             @Override
-            public void onFinish(String response) {
+            public void onFinish(final String response) {
 
-
-                String[] dates = response.split(" ");
-                List<AlarmInfo> list = childMap.get(groupPosition);
-
-                BitmapFactory.Options options = new BitmapFactory.Options();
-                options.inPreferredConfig = Bitmap.Config.ARGB_4444;  //压缩图片 防止内存
-
-                for (String time : dates) {
-                    Socket socket = null;
-                    try {
-                        OutputStream os;
-                        socket = new Socket(Data.SERVER_IP,
-                                Data.SERVER_PORT1);
-                        os = socket.getOutputStream();
-                        byte[] buffer = (Data.PHOTO + " " + Data.account
-                                + " " + Tools.pwdToMd5(Data.password) + " " + date + "/" + time + '\n').getBytes();
-                        os.write(buffer);
-                        os.flush();
-
-
-                        Bitmap bmp = BitmapFactory.decodeStream(socket.getInputStream(), null, options);
-
-
-                        if (bmp == null) {
-                            continue;
-                        }
-
-                        list.add(new AlarmInfo(bmp, time.replace('_', ':')));
-                        if (mActivity != null) {
-                            mActivity.runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    mAdapter.notifyDataSetChanged();
-                                }
-                            });
-                        }
-
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    } finally {
-                        try {
-                            socket.close();
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    }
+                if (response.equals("")){
+                    return;
                 }
 
-                hasLoad[groupPosition] = true;
+                String[] datas = response.split(" ");
+                for (String data : datas) {
+                    mData.get(groupPosition).add(data);
+                }
+
+
+                //先加载10张照片
+                String date = groupsList.get(groupPosition);
+                List<String> data = new ArrayList<>();
+                for (int i = 0; i < 10 && i < datas.length; i++) {
+                    data.add(date + '/' + mData.get(groupPosition).get(i));
+                }
+
+                loadBitmaps(groupPosition,data);
             }
 
             @Override
@@ -262,5 +295,93 @@ public class AlarmFragment extends Fragment {
         }
     }
 
+    private void loadBitmaps(final int groupPosition,final List<String> data){
+
+        if (isLoadings[groupPosition].get()){
+            return;
+        }
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                List<AlarmInfo> list = childMap.get(groupPosition);
+
+                isLoadings[groupPosition].set(true);
+
+                for (String datum : data){
+                    //当用户折叠所在标签时，isLoadings[groupPosition].get()为false，停止线程加载
+                    if (!isLoadings[groupPosition].get()) {
+                        break;
+                    }
+
+                    //当可用内存小于30M时，也不加载图片
+                    if (Runtime.getRuntime().maxMemory() - Runtime.getRuntime().totalMemory() < 1024 * 1024 * 30) {
+                        break;
+                    }
+
+                    String msg = (Data.PHOTO + " " + Data.account
+                            + " " + Tools.pwdToMd5(Data.password) + " " + datum + '\n');
+                    Bitmap bmp = loadBitmap(msg);
+
+                    if (bmp == null) {
+                        break;
+                    }
+
+                    list.add(new AlarmInfo(bmp, datum));
+
+                    if (mActivity != null) {
+                        mActivity.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                mAdapter.notifyDataSetChanged();
+                            }
+                        });
+                    }
+                }
+
+                isLoadings[groupPosition].set(false);
+            }
+        }).start();
+
+
+    }
+
+    private Bitmap loadBitmap(String msg) {
+
+        //可优化，不必要每次都new 可设置为静态，在onCreate中new
+        Bitmap bmp = null;
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inPreferredConfig = Bitmap.Config.ARGB_8888;  //压缩图片 防止内存
+
+        try (Socket socket = new Socket(Data.SERVER_IP, Data.SERVER_PORT1)) {
+            OutputStream os;
+            socket.setSoTimeout(5000);
+            os = socket.getOutputStream();
+            os.write(msg.getBytes());
+            os.flush();
+
+            bmp = BitmapFactory.decodeStream(socket.getInputStream(), null, options);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return bmp;
+    }
+
+    public static class LoadBitmap{
+        WeakReference<AlarmFragment> alarmFrag ;
+
+        LoadBitmap(AlarmFragment fragment){
+            alarmFrag = new WeakReference<AlarmFragment>(fragment);
+        }
+
+        public void load(int groupPosition,List<String> data){
+            AlarmFragment fragment = alarmFrag.get();
+            if (fragment != null){
+                fragment.loadBitmaps(groupPosition,data);
+            }
+        }
+    }
 
 }

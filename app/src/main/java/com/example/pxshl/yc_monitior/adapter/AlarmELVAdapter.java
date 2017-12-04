@@ -2,6 +2,9 @@ package com.example.pxshl.yc_monitior.adapter;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.os.Handler;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,6 +15,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.pxshl.yc_monitior.R;
+import com.example.pxshl.yc_monitior.application.MyApplication;
+import com.example.pxshl.yc_monitior.fragment.AlarmFragment;
 import com.example.pxshl.yc_monitior.model.AlarmInfo;
 import com.example.pxshl.yc_monitior.util.Data;
 
@@ -19,6 +24,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -30,14 +36,19 @@ import java.util.Map;
 public class AlarmELVAdapter extends BaseExpandableListAdapter {
 
 
-    Context mContext;
+    private Context mContext;
     //一级项目列表
-    List<String> mGroupsList;
+    private List<String> mGroupsList;
     //二级项目列表,integer对应一级项目的id
-    Map<Integer, List<AlarmInfo>> mChildsMap;
+    private Map<Integer, List<AlarmInfo>> mChildsMap;
+    private List<List<String>> mData;//储存所有数据（的名字），出于节约流量考虑，并不会一开始就加载所有数据
+    private AlarmFragment.LoadBitmap mLoad; //调用fragment加载图片
 
-    public AlarmELVAdapter(Context context, List<String> groupsList, Map<Integer, List<AlarmInfo>> childsMap) {
+
+    public AlarmELVAdapter(Context context, AlarmFragment.LoadBitmap load, List<List<String>> data, List<String> groupsList, Map<Integer, List<AlarmInfo>> childsMap) {
         mContext = context;
+        mLoad = load;
+        mData = data;
         mGroupsList = groupsList;
         mChildsMap = childsMap;
     }
@@ -49,17 +60,17 @@ public class AlarmELVAdapter extends BaseExpandableListAdapter {
 
     @Override
     public int getChildrenCount(int groupPosition) {
-        return mChildsMap.get(groupPosition).size();
+        return mChildsMap.get(groupPosition).size() + 1;
     }
 
     @Override
     public Object getGroup(int groupPosition) {
-        return mChildsMap.get(groupPosition);
+        return null;
     }
 
     @Override
     public Object getChild(int groupPosition, int childPosition) {
-        return mChildsMap.get(groupPosition).get(childPosition);
+        return null;
     }
 
     @Override
@@ -105,24 +116,79 @@ public class AlarmELVAdapter extends BaseExpandableListAdapter {
             convertView = LayoutInflater.from(mContext).inflate(R.layout.childs_alarm, null);
             viewHolder = new ChildViewHolder();
             viewHolder.childIv = (ImageView) convertView.findViewById(R.id.child_alarm_iv);
+            viewHolder.childTv = (TextView) convertView.findViewById(R.id.child_alarm_tv);
+
             convertView.setTag(viewHolder);
         } else {
             viewHolder = (ChildViewHolder) convertView.getTag();
         }
 
-        viewHolder.childIv.setImageBitmap(mChildsMap.get(groupPosition).get(childPosition).getBitmap());
 
-        //长按图片保存到手机
-        convertView.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
+        if (childPosition == mChildsMap.get(groupPosition).size()) {
 
-                AlarmInfo info = mChildsMap.get(groupPosition).get(childPosition);
-                save_photo(info.getBitmap(), Data.DL_PHOTO_PATH, info.getTime());
-                Toast.makeText(mContext, "图片已保存到内置储存/monitor/photo", Toast.LENGTH_SHORT).show();
-                return true;
+
+            if (mData.get(groupPosition).size() == 0){
+                return convertView;
             }
-        });
+
+            //设置最后信息，点击继续加载 or 到底了
+            viewHolder.childIv.setVisibility(View.GONE);
+            viewHolder.childTv.setVisibility(View.VISIBLE);
+
+            if (mData.get(groupPosition).size() == mChildsMap.get(groupPosition).size()){
+                viewHolder.childTv.setText("该日期图片已经加载完毕啦");
+            }else {
+                viewHolder.childTv.setText("点击加载更多图片");
+            }
+
+
+
+            viewHolder.childTv.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+
+
+                    if (mChildsMap.get(groupPosition).size() == mData.get(groupPosition).size()){
+                        Toast.makeText(MyApplication.getContext(),"已经加载该日期下的所有图片啦",Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    List<String> data = new ArrayList<>();
+                    List<String> allData = mData.get(groupPosition);
+
+                    int index = mChildsMap.get(groupPosition).size();
+                    String date = mGroupsList.get(groupPosition);
+
+                    for (int i = 0; i < 10 && i + index < allData.size(); i++) {
+                        Log.e("index",index + " " + i);
+                        data.add(date + '/' + allData.get(index + i));
+                    }
+
+                    if (mLoad != null) {
+                        mLoad.load(groupPosition, data);
+                    }
+                }
+
+            });
+            //点击加载
+        } else {
+
+            viewHolder.childIv.setVisibility(View.VISIBLE);
+            viewHolder.childTv.setVisibility(View.GONE);
+            viewHolder.childIv.setImageBitmap(mChildsMap.get(groupPosition).get(childPosition).getBitmap());
+            //长按图片保存到手机
+            convertView.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View v) {
+
+                    AlarmInfo info = mChildsMap.get(groupPosition).get(childPosition);
+                    save_photo(info.getBitmap(), Data.DL_PHOTO_PATH, info.getTime().replace('/','_'));
+                    Toast.makeText(MyApplication.getContext(), "图片已保存到内置储存/monitor/photo", Toast.LENGTH_SHORT).show();
+                    return true;
+                }
+            });
+        }
+
 
         return convertView;
     }
@@ -137,11 +203,12 @@ public class AlarmELVAdapter extends BaseExpandableListAdapter {
      * 一级标题的ViewHolder
      */
     static class GroupViewHolder {
-        public TextView groupTv;
+        TextView groupTv;
     }
 
     static class ChildViewHolder {
-        public ImageView childIv;
+         ImageView childIv;
+         TextView childTv;
     }
 
 
@@ -156,20 +223,12 @@ public class AlarmELVAdapter extends BaseExpandableListAdapter {
             d.mkdirs();
         }
 
-        OutputStream out = null;
-        try {
-            out = new FileOutputStream(new File(dir + File.separator + fileName + ".jpg"));
+        try (OutputStream out = new FileOutputStream(new File(dir + File.separator + fileName));){
             bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out);
         } catch (IOException e) {
             e.printStackTrace();
-        } finally {
-            try {
-                out.close();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
         }
-
     }
+
+
 }

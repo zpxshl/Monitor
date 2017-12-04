@@ -28,6 +28,16 @@
            android:layout_marginLeft="80dp"
            android:layout_gravity="center"/>
 
+       <ImageButton
+           android:id="@+id/play_btn"
+           android:layout_width="wrap_content"
+           android:layout_height="wrap_content"
+           android:background="@drawable/play"
+           android:layout_marginLeft="10dp"
+           android:layout_gravity="center"/>
+
+
+
    </LinearLayout>
 
 

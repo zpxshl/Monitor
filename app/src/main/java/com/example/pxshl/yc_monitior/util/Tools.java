@@ -1,11 +1,18 @@
 package com.example.pxshl.yc_monitior.util;
 
+import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 import android.util.Log;
 
 import java.io.File;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.List;
+
+import static android.content.Context.WIFI_SERVICE;
 
 
 /**
@@ -16,9 +23,7 @@ public class Tools {
 
     public static String pwdToMd5(String pwd) {
         //复合字符串，密码+时间戳（精确到十位）+混淆字符串
-        //+号被重载！！！！！！！！！！！！！！
         String recombination = pwd + '_' + (System.currentTimeMillis() / 1000L / 100L + 1) + "_topsky";
-        //      Log.e("recombinationr",recombination);
         StringBuilder builder = new StringBuilder();
         try {
             MessageDigest md5 = MessageDigest.getInstance("MD5");
@@ -38,6 +43,42 @@ public class Tools {
         }
 
         return builder.toString().toUpperCase();
+    }
+
+    public static boolean canLiveFromMoniotr(Context context){
+
+            if (Data.BSSID == null || Data.BSSID.equals("")){
+                return false;
+            }
+
+            WifiManager wifiManager = (WifiManager) context.getSystemService(WIFI_SERVICE);
+
+            if (wifiManager.isWifiEnabled()){
+
+                if (Tools.isWifi(context)){
+                    WifiInfo info = wifiManager.getConnectionInfo();
+                    if (info != null){
+                        String bssid = info.getBSSID();
+                        if (bssid != null && bssid.equals(Data.BSSID)){
+                            return true;
+                        }
+                    }
+
+                }
+            }
+
+            return false;
+    }
+
+    public static boolean isWifi(Context context) {
+        ConnectivityManager connectivityManager = (ConnectivityManager) context
+                .getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetInfo = connectivityManager.getActiveNetworkInfo();
+        if (activeNetInfo != null
+                && activeNetInfo.getType() == ConnectivityManager.TYPE_WIFI) {
+            return true;
+        }
+        return false;
     }
 
 

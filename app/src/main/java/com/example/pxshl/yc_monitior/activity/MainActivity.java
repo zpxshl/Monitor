@@ -102,6 +102,9 @@ public class MainActivity extends AppCompatActivity {
             //   Data.alarm_sensitivity = preferences.getInt("alarm_sensitivity",-1);
             Data.phone_num = preferences.getString("phone_num", "");
 
+            Data.BSSID = preferences.getString("bssid","");
+
+
             if (!Data.isLogin) { //如果没登陆，跳转到登陆界面
                 Intent intent = new Intent(this, LoginActivity.class);
                 startActivity(intent);
@@ -112,6 +115,7 @@ public class MainActivity extends AppCompatActivity {
 
 
         mNavigation = (BottomNavigationView) findViewById(R.id.navigation);
+
         mNavigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
         mViewPager = (ViewPager) findViewById(R.id.viewPager);
         mList = new ArrayList<>();

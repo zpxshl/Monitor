@@ -14,10 +14,10 @@
         android:id="@+id/play"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="播放"
+        android:text="实时直播"
         android:textSize="16sp"
         android:background="@drawable/oval"
-        android:layout_marginLeft="44dp"
-        android:layout_marginRight="44dp" />
+        android:layout_marginLeft="66dp"
+        android:layout_marginRight="66dp" />
 
 </LinearLayout>

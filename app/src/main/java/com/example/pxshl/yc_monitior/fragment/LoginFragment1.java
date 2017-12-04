@@ -25,10 +25,13 @@ import android.widget.Toast;
 import com.example.pxshl.yc_monitior.R;
 import com.example.pxshl.yc_monitior.activity.MainActivity;
 import com.example.pxshl.yc_monitior.activity.WifiActivity;
+import com.example.pxshl.yc_monitior.application.MyApplication;
 import com.example.pxshl.yc_monitior.inyerface.RequestCallBack;
 import com.example.pxshl.yc_monitior.net.tcp.TcpTool;
 import com.example.pxshl.yc_monitior.util.Data;
 import com.example.pxshl.yc_monitior.util.Tools;
+
+import java.util.Timer;
 
 import static android.content.Context.MODE_PRIVATE;
 
@@ -152,7 +155,7 @@ public class LoginFragment1 extends Fragment {
 
                                     if (rembPass.isChecked()) {
                                         //储存帐号密码
-                                        SharedPreferences preferences = mActivity.getSharedPreferences("properties", MODE_PRIVATE);
+                                        SharedPreferences preferences = MyApplication.getContext().getSharedPreferences("properties", MODE_PRIVATE);
                                         SharedPreferences.Editor editor = preferences.edit();
                                         editor.putString("account", account);
                                         editor.putString("password", password);
@@ -179,7 +182,7 @@ public class LoginFragment1 extends Fragment {
                         });
 
                     } else {
-                        Toast.makeText(mActivity, "请输入完整的帐号和密码", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(MyApplication.getContext(), "请输入完整的帐号和密码", Toast.LENGTH_SHORT).show();
                     }
                 }
             });
@@ -214,22 +217,23 @@ public class LoginFragment1 extends Fragment {
                 };
 
 
+
                 send.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
 
                         if (account.getText().toString().equals("")) {
-                            Toast.makeText(mActivity, "请输入帐号", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(MyApplication.getContext(), "请输入帐号", Toast.LENGTH_SHORT).show();
                             return;
                         }
 
                         if (!new1_pwd.getText().toString().equals(new2_pwd.getText().toString())) {
-                            Toast.makeText(mActivity, "新密码不一致，请重新输入", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(MyApplication.getContext(), "新密码不一致，请重新输入", Toast.LENGTH_SHORT).show();
                             return;
                         }
 
                         if (phone.getText().toString().length() != 11) {
-                            Toast.makeText(mActivity, "请输入正确的手机号码", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(MyApplication.getContext(), "请输入正确的手机号码", Toast.LENGTH_SHORT).show();
                             return;
                         }
 
@@ -262,7 +266,7 @@ public class LoginFragment1 extends Fragment {
                         public void onClick(View v) {
                             String captcha_number = captcha.getText().toString();
                             if (captcha.equals("")) {
-                                Toast.makeText(mActivity, "请输入验证码", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(MyApplication.getContext(), "请输入验证码", Toast.LENGTH_SHORT).show();
                             } else {
                                 new TcpTool(Data.SERVER_IP, Data.SERVER_PORT2).connect(Data.CHANGE_PWD_BY_CAPTCHA + " " + account.getText().toString() + " " + new1_pwd.getText().toString() + " " + captcha_number, new RequestCallBack() {
                                     @Override
@@ -311,7 +315,7 @@ public class LoginFragment1 extends Fragment {
             mActivity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    Toast.makeText(mActivity, msg, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MyApplication.getContext(), msg, Toast.LENGTH_SHORT).show();
                     if (pd != null) {
                         pd.cancel();
                     }
