@@ -1,51 +1,54 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical" android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
 
     <Button
-    android:id="@+id/login"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:textSize="20sp"
-    android:background="@drawable/oval"
-    android:layout_marginLeft="22dp"
-    android:layout_marginRight="22dp"
-    android:layout_marginTop="66dp"/>
+        android:id="@+id/login"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="22dp"
+        android:layout_marginRight="22dp"
+        android:layout_marginTop="66dp"
+        android:background="@drawable/oval"
+        android:textSize="20sp" />
 
     <Button
         android:id="@+id/setWifi"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="智能配置监控器"
-        android:textSize="20sp"
-        android:background="@drawable/oval"
-        android:layout_marginLeft="22dp"
-        android:layout_marginRight="22dp"
-        android:layout_marginTop="22dp"/>
-<!--
-    <Button
-        android:id="@+id/setAlram"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="未设置报警"
-        android:textSize="20sp"
-        android:background="@drawable/oval"
-        android:layout_marginLeft="22dp"
-        android:layout_marginRight="22dp"
-        android:layout_marginTop="22dp"/>
-
-    <SeekBar
-        android:id="@+id/alarm_sensitivity"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        style="?android:attr/progressBarStyleHorizontal"
         android:layout_marginLeft="22dp"
         android:layout_marginRight="22dp"
         android:layout_marginTop="22dp"
-        android:max="100"
-        android:visibility="invisible"/>
-        -->
+        android:background="@drawable/oval"
+        android:text="智能配置监控器"
+        android:textSize="20sp" />
+
+
+    <!--
+        <Button
+            android:id="@+id/setAlram"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="未设置报警"
+            android:textSize="20sp"
+            android:background="@drawable/oval"
+            android:layout_marginLeft="22dp"
+            android:layout_marginRight="22dp"
+            android:layout_marginTop="22dp"/>
+
+        <SeekBar
+            android:id="@+id/alarm_sensitivity"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_marginLeft="22dp"
+            android:layout_marginRight="22dp"
+            android:layout_marginTop="22dp"
+            android:max="100"
+            android:visibility="invisible"/>
+            -->
 
 
 </LinearLayout>

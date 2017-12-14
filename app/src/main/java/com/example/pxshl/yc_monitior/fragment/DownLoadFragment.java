@@ -240,12 +240,6 @@ public class DownLoadFragment extends Fragment {
                     intent.putExtra("fileInfo", fileInfo);
                     mActivity.startService(intent);
                     Toast.makeText(getContext(), fileInfo.getFileName() + "开始下载", Toast.LENGTH_SHORT).show();
-                } else if (!fileInfo.isFinish() && fileInfo.isDownloading()) {
-                    //停止下载
-                    intent.setAction(DownloadService.DELETE);
-                    intent.putExtra("fileInfo", fileInfo);
-                    mActivity.startService(intent);
-                    Toast.makeText(getContext(), fileInfo.getFileName() + "停止下载", Toast.LENGTH_SHORT).show();
                 }
 
                 return true;
@@ -271,8 +265,6 @@ public class DownLoadFragment extends Fragment {
                     Toast.makeText(getContext(), fileInfo.getFileName() + " 下载成功", Toast.LENGTH_SHORT).show();
                 }
             }
-
-
         }
     }
 

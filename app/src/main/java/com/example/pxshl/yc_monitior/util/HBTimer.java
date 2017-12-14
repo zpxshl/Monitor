@@ -1,5 +1,7 @@
 package com.example.pxshl.yc_monitior.util;
 
+import android.util.Log;
+
 /**
  * Created by pxshl on 17-11-28.
  * 发送心跳包的定时类

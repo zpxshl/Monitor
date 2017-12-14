@@ -65,10 +65,6 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        long maxMemory = Runtime.getRuntime().maxMemory() / 1024 / 1024;
-        long totalMemory = Runtime.getRuntime().totalMemory() / 1024 / 1024;
-        Log.e("tag", maxMemory + "  " + totalMemory);
-
         requestPermissions();
     }
 
@@ -93,6 +89,8 @@ public class MainActivity extends AppCompatActivity {
 
     private void init() {
 
+
+
         if (!Data.isLogin) {
             //判断是否已经登陆过（且记住密码）
             SharedPreferences preferences = getSharedPreferences("properties", MODE_PRIVATE);
@@ -103,6 +101,7 @@ public class MainActivity extends AppCompatActivity {
             Data.phone_num = preferences.getString("phone_num", "");
 
             Data.BSSID = preferences.getString("bssid","");
+            Log.e("bssid",Data.BSSID);
 
 
             if (!Data.isLogin) { //如果没登陆，跳转到登陆界面

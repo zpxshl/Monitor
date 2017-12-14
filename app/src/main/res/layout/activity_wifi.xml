@@ -16,7 +16,7 @@
         android:id="@+id/wifi_explain_tv"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="请点击您的wifi，输入密码，app会配置监控器连接该wifi"
+        android:text="请点击您的wifi，输入密码"
         android:textSize="25sp"
         android:gravity="center"/>
 

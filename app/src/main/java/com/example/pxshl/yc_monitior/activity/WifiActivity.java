@@ -4,6 +4,10 @@ import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.location.LocationManager;
+import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkCapabilities;
+import android.net.NetworkRequest;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
@@ -26,6 +30,11 @@ import com.example.pxshl.yc_monitior.util.Data;
 import com.tbruyelle.rxpermissions2.RxPermissions;
 
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.net.SocketAddress;
 import java.util.List;
 
 import io.reactivex.functions.Consumer;
@@ -41,6 +50,12 @@ public class WifiActivity extends AppCompatActivity {
 
     private WifiManager mWifiManager;
     private TextView mBlankTV;
+    private WifiAdapter mAdapter;
+    private List<ScanResult> mDataList;
+
+    private ConnectivityManager mConnectivityManager;  //连接管理，强制发送帐号密码走wifi
+    private ConnectivityManager.NetworkCallback mNetWorkCallBack;
+    private Socket mSocket;
 
 
     @Override
@@ -89,9 +104,200 @@ public class WifiActivity extends AppCompatActivity {
             mWifiManager.setWifiEnabled(true);
         }
 
+
+    }
+
+
+    /**
+     * @param SSID 要判断时候存在的wifi的SSID
+     * @return ture表示该SSID对应的wifi在附近
+     */
+    private boolean hasMonitorWifi(String SSID) {
+        //先刷新wifi列表
+        List<ScanResult> results = mWifiManager.getScanResults();
+        for (ScanResult result : results) {
+            Log.e("SSID", result.SSID);
+            if (result.SSID.contains(SSID)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean isConnectMonitor() {
+        //先判断当前连接的wifi时候为监控器的wifi
+        //mWifiManager.getConnectionInfo().getSSID(),就算当前没连接wifi也会返回上一次尝试连接的wifi的数据，因此可能导致错误
+
+        if (mWifiManager.getConnectionInfo().getSSID().contains(MonitorWifiName)) {  //轮询方式，判断连接上是不是监控器的wifi
+
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+
+                    //显示wifi列表
+                    RecyclerView wifiList = (RecyclerView) findViewById(R.id.wifi_list);
+                    mDataList = mWifiManager.getScanResults();
+                    mAdapter = new WifiAdapter(WifiActivity.this, mDataList);
+                    wifiList.setLayoutManager(new LinearLayoutManager(WifiActivity.this));
+                    wifiList.setAdapter(mAdapter);
+                    mBlankTV.setVisibility(View.GONE);
+                }
+            });
+
+            return true;
+        }
+        return false;
+    }
+
+    //连接SSID对应的wifi
+    private boolean connectMonitorWifi(String SSID) {
+
+        List<WifiConfiguration> wifiConfigurationList = mWifiManager.getConfiguredNetworks();
+
+        //防止系统在你接下去的代码调用enableNetwork时候，系统自动连接其他wifi
+        for (WifiConfiguration config : wifiConfigurationList) {
+            mWifiManager.disableNetwork(config.networkId);
+        }
+
+
+        for (WifiConfiguration config : wifiConfigurationList) {
+            if (config.SSID.equals('\"' + SSID + '\"')) {
+                return mWifiManager.enableNetwork(config.networkId, true);
+            }
+        }
+
+        WifiConfiguration config = createWifiConfig(SSID);
+        int netId = mWifiManager.addNetwork(config);
+
+        if (-1 == netId) {
+            return false;
+        } else {
+            return mWifiManager.enableNetwork(netId, true);
+        }
+
+
+    }
+
+    //此项目需要连接的wifi是不加密的
+    private WifiConfiguration createWifiConfig(String SSID) {
+
+        WifiConfiguration config = new WifiConfiguration();
+        config.SSID = "\"" + SSID + "\""; //wifi名称
+        config.wepKeys[0] = "\"" + "\"";
+        config.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);
+        config.wepTxKeyIndex = 0;
+
+        return config;
+    }
+
+
+    public void sendToMonitor(final String msg) {
+
+        showMsg("请稍等15秒，不要退出APP");
+
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+
+                    if (mSocket != null){
+                        SocketAddress address = new InetSocketAddress(Data.MONITOR_WIFI_IP, Data.MONITOR_PORT2);
+                        mSocket.connect(address);
+                    }
+
+
+                    OutputStream os = mSocket.getOutputStream();
+                    byte[] buffer = (msg + '\n').getBytes();
+                    os.write(buffer);
+                    os.flush();
+                    showMsg("请观察监控器的绿灯是否亮，绿灯亮则说明监控器已经连接上wifi"
+                            + "如果15秒后监控器绿灯没有亮，请重新配置监控器");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    showMsg("配置失败，请检查当前连接的wifi是否为监控器wifi，并确保选择的您的wifi和输入正确的密码"
+                            + "请重新配置监控器");
+                }finally {
+                    if (mSocket != null){
+                        try {
+                            mSocket.close();
+                        }catch (IOException e){
+                            e.printStackTrace();
+                        }
+
+                    }
+                }
+
+            }
+        }).start();
+    }
+
+    private void recoverWifi() {
+
+        for (WifiConfiguration config : mWifiManager.getConfiguredNetworks()) {
+            mWifiManager.enableNetwork(config.networkId, true);
+        }
+    }
+
+    private void showMsg(final String msg) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_SHORT).show();
+                mBlankTV.setVisibility(View.VISIBLE);
+                mBlankTV.setText(msg);
+            }
+        });
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        mConnectivityManager = (ConnectivityManager) this.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkRequest.Builder builder = new NetworkRequest.Builder().addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
+                .removeCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET);
+
+        mNetWorkCallBack = new ConnectivityManager.NetworkCallback() {
+            @Override
+            public void onAvailable(final Network network) {
+                super.onAvailable(network);
+
+                if (mWifiManager.getConnectionInfo().getSSID().contains(MonitorWifiName)) {
+                    Log.e("networkcallback", MonitorWifiName);
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                mSocket = new Socket();
+                                network.bindSocket(mSocket);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }).start();
+                }
+
+
+            }
+
+            @Override
+            public void onLost(Network network) {
+
+            }
+
+        };
+
+        mConnectivityManager.registerNetworkCallback(builder.build(), mNetWorkCallBack);
+
+        initWifi();
+    }
+
+    private void initWifi() {
+
         mWifiManager.startScan();
 
         if (hasMonitorWifi(MonitorWifiName)) {
+
 
             if (isConnectMonitor()) {
                 return;
@@ -135,126 +341,24 @@ public class WifiActivity extends AppCompatActivity {
         } else {
             showMsg("请靠近监控器，并打开监控器的wifi");
         }
-
-
     }
 
-
-    /**
-     * @param SSID 要判断时候存在的wifi的SSID
-     * @return ture表示该SSID对应的wifi在附近
-     */
-    private boolean hasMonitorWifi(String SSID) {
-        //先刷新wifi列表
-        List<ScanResult> results = mWifiManager.getScanResults();
-        for (ScanResult result : results) {
-            Log.e("SSID", result.SSID);
-            if (result.SSID.contains(SSID)) {
-                return true;
+    @Override
+    protected void onStop() {
+        mConnectivityManager.unregisterNetworkCallback(mNetWorkCallBack);
+        if (mAdapter != null){
+            if (mDataList != null){
+                mDataList.clear();
             }
-        }
-        return false;
-    }
-
-    private boolean isConnectMonitor() {
-        //先判断当前连接的wifi时候为监控器的wifi
-        //mWifiManager.getConnectionInfo().getSSID(),就算当前没连接wifi也会返回上一次尝试连接的wifi的数据，因此可能导致错误
-
-        if (mWifiManager.getConnectionInfo().getSSID().contains(MonitorWifiName)) {  //轮询方式，判断连接上是不是监控器的wifi
-
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-
-                    //显示wifi列表
-                    RecyclerView wifiList = (RecyclerView) findViewById(R.id.wifi_list);
-                    WifiAdapter adapter = new WifiAdapter(WifiActivity.this, mWifiManager.getScanResults());
-                    wifiList.setLayoutManager(new LinearLayoutManager(WifiActivity.this));
-                    wifiList.setAdapter(adapter);
-                    mBlankTV.setVisibility(View.GONE);
-                }
-            });
-
-            return true;
-        }
-        return false;
-    }
-
-    //连接SSID对应的wifi
-    private boolean connectMonitorWifi(String SSID) {
-
-        List<WifiConfiguration> wifiConfigurationList = mWifiManager.getConfiguredNetworks();
-
-        //防止系统在你接下去的代码调用enableNetwork时候，系统自动连接其他wifi
-        for (WifiConfiguration config : wifiConfigurationList) {
-            mWifiManager.disableNetwork(config.networkId);
+            mAdapter.notifyDataSetChanged();
         }
 
-        for (WifiConfiguration config : wifiConfigurationList) {
-            if (config.SSID.equals('\"' + SSID + '\"')) {
-                mWifiManager.enableNetwork(config.networkId, true);
-                return true;
-            }
-        }
-
-        WifiConfiguration config = createWifiConfig(SSID);
-        int netId = mWifiManager.addNetwork(config);
-
-        if (-1 == netId) {
-            return false;
-        } else {
-            mWifiManager.enableNetwork(netId, true);
-            return true;
-        }
-
+        super.onStop();
     }
 
-    //此项目需要连接的wifi是不加密的
-    private WifiConfiguration createWifiConfig(String SSID) {
-
-        WifiConfiguration config = new WifiConfiguration();
-        config.SSID = "\"" + SSID + "\""; //wifi名称
-        config.wepKeys[0] = "\"" + "\"";
-        config.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);
-        config.wepTxKeyIndex = 0;
-
-        return config;
+    @Override
+    protected void onDestroy() {
+        recoverWifi();
+        super.onDestroy();
     }
-
-
-    public void sendToMonitor(final String msg) {
-
-        showMsg("请稍等15秒，不要退出APP");
-
-        new TcpTool(Data.MONITOR_WIFI_IP, Data.MONITOR_PORT2).connect(msg, new RequestCallBack() {
-            @Override
-            public void onFinish(String response) {
-
-                showMsg("请观察监控器的绿灯是否亮，绿灯亮则说明监控器已经连接上wifi"
-                        + "如果15秒后监控器绿灯没有亮，请重新配置监控器");
-
-                //储存BSSID
-
-            }
-
-            @Override
-            public void onError() {
-                showMsg("配置失败，请检查当前连接的wifi是否为监控器wifi，并确保选择的您的wifi和输入正确的密码"
-                        + "请重新配置监控器");
-            }
-        });
-    }
-
-
-    private void showMsg(final String msg) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_SHORT).show();
-                mBlankTV.setVisibility(View.VISIBLE);
-                mBlankTV.setText(msg);
-            }
-        });
-    }
-
 }

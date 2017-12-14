@@ -1,23 +1,25 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:layout_height="match_parent">
 
     <SurfaceView
         android:id="@+id/surfaceView"
-
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_weight="1" />
+        android:layout_marginTop="40dp"
+        android:layout_gravity="center" />
+
 
     <Button
         android:id="@+id/play"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="实时直播"
-        android:textSize="16sp"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="40dp"
         android:background="@drawable/oval"
-        android:layout_marginLeft="66dp"
-        android:layout_marginRight="66dp" />
+        android:text="实时监控"
+        android:textSize="20sp" />
 
-</LinearLayout>
+
+</RelativeLayout>

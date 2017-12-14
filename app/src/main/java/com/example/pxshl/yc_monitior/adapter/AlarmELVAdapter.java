@@ -1,5 +1,6 @@
 package com.example.pxshl.yc_monitior.adapter;
 
+import android.app.Dialog;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -43,14 +44,16 @@ public class AlarmELVAdapter extends BaseExpandableListAdapter {
     private Map<Integer, List<AlarmInfo>> mChildsMap;
     private List<List<String>> mData;//储存所有数据（的名字），出于节约流量考虑，并不会一开始就加载所有数据
     private AlarmFragment.LoadBitmap mLoad; //调用fragment加载图片
+    private List<Boolean> mIsNoData;
 
 
-    public AlarmELVAdapter(Context context, AlarmFragment.LoadBitmap load, List<List<String>> data, List<String> groupsList, Map<Integer, List<AlarmInfo>> childsMap) {
+    public AlarmELVAdapter(Context context, AlarmFragment.LoadBitmap load, List<List<String>> data, List<String> groupsList, Map<Integer, List<AlarmInfo>> childsMap,List<Boolean> isNoData) {
         mContext = context;
         mLoad = load;
         mData = data;
         mGroupsList = groupsList;
         mChildsMap = childsMap;
+        mIsNoData = isNoData;
     }
 
     @Override
@@ -126,19 +129,20 @@ public class AlarmELVAdapter extends BaseExpandableListAdapter {
 
         if (childPosition == mChildsMap.get(groupPosition).size()) {
 
-
-            if (mData.get(groupPosition).size() == 0){
-                return convertView;
-            }
-
             //设置最后信息，点击继续加载 or 到底了
             viewHolder.childIv.setVisibility(View.GONE);
             viewHolder.childTv.setVisibility(View.VISIBLE);
 
+            if (mIsNoData.get(groupPosition)){
+                viewHolder.childTv.setText("恭喜您，该日期下没有报警照片");
+                return convertView;
+            }
+
+
             if (mData.get(groupPosition).size() == mChildsMap.get(groupPosition).size()){
-                viewHolder.childTv.setText("该日期图片已经加载完毕啦");
+                viewHolder.childTv.setText("该日期照片已经加载完毕啦");
             }else {
-                viewHolder.childTv.setText("点击加载更多图片");
+                viewHolder.childTv.setText("点击加载更多照片");
             }
 
 
@@ -149,7 +153,7 @@ public class AlarmELVAdapter extends BaseExpandableListAdapter {
 
 
                     if (mChildsMap.get(groupPosition).size() == mData.get(groupPosition).size()){
-                        Toast.makeText(MyApplication.getContext(),"已经加载该日期下的所有图片啦",Toast.LENGTH_SHORT).show();
+                        Toast.makeText(MyApplication.getContext(),"已经加载该日期下的所有照片啦",Toast.LENGTH_SHORT).show();
                         return;
                     }
 
@@ -176,11 +180,19 @@ public class AlarmELVAdapter extends BaseExpandableListAdapter {
             viewHolder.childIv.setVisibility(View.VISIBLE);
             viewHolder.childTv.setVisibility(View.GONE);
             viewHolder.childIv.setImageBitmap(mChildsMap.get(groupPosition).get(childPosition).getBitmap());
-            //长按图片保存到手机
-            convertView.setOnLongClickListener(new View.OnLongClickListener() {
+
+            viewHolder.childIv.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    ImageView iv = new ImageView(mContext);
+                    iv.setImageBitmap(mChildsMap.get(groupPosition).get(childPosition).getBitmap());
+                    showBigImage(iv);
+                }
+            });
+
+            viewHolder.childIv.setOnLongClickListener(new View.OnLongClickListener() {
                 @Override
                 public boolean onLongClick(View v) {
-
                     AlarmInfo info = mChildsMap.get(groupPosition).get(childPosition);
                     save_photo(info.getBitmap(), Data.DL_PHOTO_PATH, info.getTime().replace('/','_'));
                     Toast.makeText(MyApplication.getContext(), "图片已保存到内置储存/monitor/photo", Toast.LENGTH_SHORT).show();
@@ -188,6 +200,9 @@ public class AlarmELVAdapter extends BaseExpandableListAdapter {
                 }
             });
         }
+
+
+
 
 
         return convertView;
@@ -230,5 +245,32 @@ public class AlarmELVAdapter extends BaseExpandableListAdapter {
         }
     }
 
+    private void showBigImage(ImageView view){
 
+        if (view == null){
+            return;
+        }
+
+        final Dialog dialog = new Dialog(mContext,android.R.style.Theme_Black_NoTitleBar_Fullscreen);
+        dialog.setContentView(view);
+        dialog.getWindow().setWindowAnimations(R.style.CustomDialog);
+        dialog.show();
+
+        view.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                dialog.dismiss();
+            }
+        });
+    }
+
+
+
+    /*
+
+                    AlarmInfo info = mChildsMap.get(groupPosition).get(childPosition);
+                    save_photo(info.getBitmap(), Data.DL_PHOTO_PATH, info.getTime().replace('/','_'));
+                    Toast.makeText(MyApplication.getContext(), "图片已保存到内置储存/monitor/photo", Toast.LENGTH_SHORT).show();
+     */
 }

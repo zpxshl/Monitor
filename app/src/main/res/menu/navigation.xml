@@ -5,19 +5,19 @@
         android:id="@+id/live"
         android:orderInCategory="0"
         android:icon="@mipmap/play"
-        android:title="直播" />
+        android:title="实时监控" />
 
     <item
         android:id="@+id/navigation_dashboard"
         android:icon="@mipmap/download"
         android:orderInCategory="1"
-        android:title="下载"/>
+        android:title="下载录像"/>
 
     <item
         android:id="@+id/alarm"
         android:orderInCategory="2"
         android:icon="@drawable/alarm"
-        android:title="警报"/>
+        android:title="警报照片"/>
 
     <item
         android:id="@+id/navigation_notification"

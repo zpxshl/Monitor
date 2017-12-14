@@ -147,7 +147,7 @@ public class SettingsFragment extends Fragment {
         });*/
 
 
-        login.setText(Data.account + " 欢迎您");
+        login.setText("用户：" + Data.account + " 欢迎您");
 
  /*      if(Data.alarm_sensitivity == 0){
             mSetAlarm.setText("未开启报警");

@@ -46,7 +46,10 @@ public class SipdroidSocket extends DatagramSocket {
 			impl.bind(port,InetAddress.getByName("0"));
 		}
 	}
-	
+
+
+
+
 	public void close() {
 		super.close();
 		if (loaded) impl.close();
@@ -86,6 +89,7 @@ public class SipdroidSocket extends DatagramSocket {
 		        OSNetworkSystem.getOSNetworkSystem().oneTimeInitialization(true);
 		        SipdroidSocket.loaded = true;
 			} catch (Throwable e) {
+
 			}
 	}
 }

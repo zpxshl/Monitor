@@ -126,6 +126,7 @@ public class DownLoadELVAdapter extends BaseExpandableListAdapter {
             childsViewHolder.childsTv = (TextView) view.findViewById(R.id.childs_tv);
             childsViewHolder.delBtn = (ImageButton) view.findViewById(R.id.del_btn);
             childsViewHolder.playBtn = (ImageButton)view.findViewById(R.id.play_btn);
+            childsViewHolder.stopBtn = (ImageButton) view.findViewById(R.id.stop_btn);
             childsViewHolder.progressBar = (ProgressBar) view.findViewById(R.id.progress_bar);
             childsViewHolder.progressBar.setMax(100);
             view.setTag(childsViewHolder);
@@ -133,21 +134,24 @@ public class DownLoadELVAdapter extends BaseExpandableListAdapter {
             childsViewHolder = (ChildsViewHolder) view.getTag();
         }
 
-        childsViewHolder.childsTv.setText((fileInfo.getFileName().split("/"))[1].split(".mp3")[0]); //将文件名显示为对用户友好的格式
+        childsViewHolder.childsTv.setText((fileInfo.getFileName().split("/"))[1].split(".mp4")[0].replace('-',':')); //将文件名显示为对用户友好的格式
         if (fileInfo.isFinish()) {
             //如果下载完成并将progressbar设置为gone，显示可以删除的按钮，并提示用户下载完成
             childsViewHolder.progressBar.setVisibility(View.GONE);
+            childsViewHolder.stopBtn.setVisibility(View.GONE);
             childsViewHolder.delBtn.setVisibility(View.VISIBLE);
             childsViewHolder.playBtn.setVisibility(View.VISIBLE);
         } else {
             if (fileInfo.getLength() != 0) {
                 childsViewHolder.progressBar.setProgress((int) (fileInfo.getFinished() * 100 / fileInfo.getLength()));
                 childsViewHolder.progressBar.setVisibility(View.VISIBLE);
+                childsViewHolder.stopBtn.setVisibility(View.VISIBLE);
             } else {
                 //长度为０，说明未下载，将pb和删除按钮隐藏起来
                 childsViewHolder.progressBar.setVisibility(View.GONE);
                 childsViewHolder.delBtn.setVisibility(View.GONE);
                 childsViewHolder.playBtn.setVisibility(View.GONE);
+                childsViewHolder.stopBtn.setVisibility(View.GONE);
             }
         }
         /**
@@ -171,9 +175,9 @@ public class DownLoadELVAdapter extends BaseExpandableListAdapter {
                                 fileInfo.setFinished(0);
                                 fileInfo.setLength(0);
 
-                                Toast.makeText(mContext, fileInfo.getFileName() + "删除成功", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(mContext, "本机视频：" + fileInfo.getFileName() + "删除成功", Toast.LENGTH_SHORT).show();
                                 childsViewHolder.delBtn.setVisibility(View.GONE);
-                                childsViewHolder.delBtn.setVisibility(View.GONE);
+                                childsViewHolder.playBtn.setVisibility(View.GONE);
                             }
                         }).setNegativeButton("取消", null).setCancelable(false).show();
                 Log.d("TAG", "delbtn clicked");
@@ -198,8 +202,19 @@ public class DownLoadELVAdapter extends BaseExpandableListAdapter {
 
                 mp4Intent.putExtra("oneshot", 0);
                 mp4Intent.putExtra("configchange", 0);
-                mp4Intent.setDataAndType(uri, "video/*");
+                mp4Intent.setDataAndType(uri, "video/mp4");
                 mContext.startActivity(mp4Intent);
+            }
+        });
+
+        childsViewHolder.stopBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(mContext, DownloadService.class);
+                intent.setAction(DownloadService.DELETE);
+                intent.putExtra("fileInfo", fileInfo);
+                mContext.startService(intent);
+                Toast.makeText(MyApplication.getContext(), fileInfo.getFileName() + "停止下载", Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -242,6 +257,7 @@ public class DownLoadELVAdapter extends BaseExpandableListAdapter {
         ProgressBar progressBar;
         ImageButton delBtn;
         ImageButton playBtn;
+        ImageButton stopBtn;
 
     }
 

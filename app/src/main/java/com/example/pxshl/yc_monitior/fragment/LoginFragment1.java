@@ -212,7 +212,7 @@ public class LoginFragment1 extends Fragment {
                     @Override
                     public void onFinish() {
                         send.setText("发送验证码");
-                        send.setFocusable(true);
+                        send.setEnabled(true);
                     }
                 };
 
@@ -238,7 +238,7 @@ public class LoginFragment1 extends Fragment {
                         }
 
                         new TcpTool(Data.SERVER_IP, Data.SERVER_PORT2).connect(Data.SEND_PHONE + " " + account.getText().toString() + " " + phone.getText().toString(), null);
-                        send.setFocusable(false);
+                        send.setEnabled(false);
                         timer.start();
 
                     }

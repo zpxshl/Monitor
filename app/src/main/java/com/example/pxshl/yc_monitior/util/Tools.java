@@ -1,10 +1,12 @@
 package com.example.pxshl.yc_monitior.util;
 
+import android.app.Activity;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
+import android.util.DisplayMetrics;
 import android.util.Log;
 
 import java.io.File;
@@ -52,6 +54,7 @@ public class Tools {
             }
 
             WifiManager wifiManager = (WifiManager) context.getSystemService(WIFI_SERVICE);
+
 
             if (wifiManager.isWifiEnabled()){
 
@@ -124,6 +127,7 @@ public class Tools {
 
         return fileList;
     }
+
 
 
 }

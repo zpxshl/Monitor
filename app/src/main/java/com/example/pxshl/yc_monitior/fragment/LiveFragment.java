@@ -8,6 +8,7 @@ import android.media.MediaFormat;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.SurfaceView;
@@ -19,21 +20,19 @@ import android.widget.Toast;
 import com.example.pxshl.yc_monitior.R;
 import com.example.pxshl.yc_monitior.application.MyApplication;
 import com.example.pxshl.yc_monitior.inyerface.RequestCallBack;
-import com.example.pxshl.yc_monitior.inyerface.SendCallBack;
 import com.example.pxshl.yc_monitior.net.rtp.RtpPacket;
 import com.example.pxshl.yc_monitior.net.rtp.RtpSocket;
 import com.example.pxshl.yc_monitior.net.rtp.SipdroidSocket;
 import com.example.pxshl.yc_monitior.net.tcp.TcpTool;
-import com.example.pxshl.yc_monitior.net.udp.UdpTool;
 import com.example.pxshl.yc_monitior.util.Data;
 import com.example.pxshl.yc_monitior.util.HBTask;
 import com.example.pxshl.yc_monitior.util.HBTimer;
 import com.example.pxshl.yc_monitior.util.Tools;
 
 import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.InetAddress;
 import java.nio.ByteBuffer;
-
-import javax.security.auth.login.LoginException;
 
 import static android.content.Context.MODE_PRIVATE;
 
@@ -62,10 +61,9 @@ public class LiveFragment extends Fragment {
     private long mCurrentTime;
 
     private HBTimer mTimer;
-
     public enum LiveFrom {Monitor, Server}
-
-    ;
+    private LiveFrom mLiveFrom;
+    private DatagramPacket mPacket;
 
 
     @Override
@@ -74,22 +72,32 @@ public class LiveFragment extends Fragment {
         mSurfaceView = (SurfaceView) view.findViewById(R.id.surfaceView);
         mSurfaceView.setKeepScreenOn(true);
         mSurfaceView.setVisibility(View.INVISIBLE);
+
+        //设置surfaceview的大小为 4：3 避免不按比例拉伸导致变形
+        DisplayMetrics dm = new DisplayMetrics();
+        mActivity.getWindowManager().getDefaultDisplay().getMetrics(dm);
+        int widthPixels = dm.widthPixels;
+        ViewGroup.LayoutParams lp = mSurfaceView.getLayoutParams();
+        lp.width = widthPixels;
+        lp.height =widthPixels / 4 * 3;
+        mSurfaceView.setLayoutParams(lp);
+
         mPlay = (Button) (view.findViewById(R.id.play));
         mPlay.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 
 
-                if (System.currentTimeMillis() - mCurrentTime < 3000) {  //服务器要求的
-                    Toast.makeText(MyApplication.getContext(), "请休息下，别按得太快哦～", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-
-                mCurrentTime = System.currentTimeMillis();
-
                 if (!isRunning) {
+
+                    if (System.currentTimeMillis() - mCurrentTime < 2000) {  //服务器要求的
+                        Toast.makeText(MyApplication.getContext(), "请休息下，别按得太快哦～", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
                     live();
                 } else {
+                    mCurrentTime = System.currentTimeMillis();
                     String msg = Data.STOP_PLAY + " " + Data.account + " " + Tools.pwdToMd5(Data.password);
                     new TcpTool(Data.SERVER_IP, Data.SERVER_PORT1).connect(msg, null);
                     close();
@@ -112,14 +120,12 @@ public class LiveFragment extends Fragment {
     }
 
 
-
-
     //播放视频
     private void live() {
 
         if (Tools.canLiveFromMoniotr(MyApplication.getContext())) {
             liveFromMonitor();
-        }else {
+        } else {
             liveFromServer();
         }
 
@@ -130,27 +136,22 @@ public class LiveFragment extends Fragment {
     }
 
     private void liveFromMonitor() {
+        mLiveFrom = LiveFrom.Monitor;
         isRunning = true;
         String msg = "play_lan " + Data.account + " P " + Tools.pwdToMd5(Data.password);
-        UdpTool.sendUDP(msg, "255.255.255.255", Data.MONITOR_PORT1, new SendCallBack() {
-            @Override
-            public void onFinish() {
-                try {
-                    startReceive();
-                } catch (Exception e) {  //当局域网超过5秒没回应时
-                    close();
-                    e.printStackTrace();
-                }
-            }
 
-            @Override
-            public void onError() {
-                liveFromServer();   //说明无法直接从监控器那里获取直播数据。所以将数据源改为服务器
-            }
-        });
+        try {
+            mPacket = new DatagramPacket(msg.getBytes(), msg.length(), InetAddress.getByName("255.255.255.255"), Data.MONITOR_PORT1);
+        } catch (Exception e) {
+            close();
+            showMsg("网络异常，请稍后再试");
+            e.printStackTrace();
+        }
+
     }
 
     private void liveFromServer() {
+        mLiveFrom = LiveFrom.Server;
 
         isRunning = true;
 
@@ -163,38 +164,23 @@ public class LiveFragment extends Fragment {
                     close();
                     showMsg("监控器不在线");
                 } else if (response.equals("")) {
-                    Log.e(TAG, "response.equal");
                     close();
                     showMsg("服务器异常，请稍后再试");
                 } else {
 
-                    int port = 0;
+                    int port;
                     try {
                         port = Integer.parseInt(response.trim());
+                        String msg = "app";
+                        mPacket = new DatagramPacket(msg.getBytes(), msg.length(), InetAddress.getByName(Data.SERVER_IP), port);
+                        startReceive();
                     } catch (Exception e) {
+                        close();
+                        showMsg("网络异常，请稍后再试");
                         e.printStackTrace();
-                        return;
                     }
 
-                    //   String msg = "app" + " " + Data.account + " " + Tools.pwdToMd5(Data.password);
-                    UdpTool.sendUDP("app", Data.SERVER_IP, port, new SendCallBack() {  //子线程回调
-                        @Override
-                        public void onFinish() {
-                            try {
-                                startReceive(); //在子线程中操作
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                                close();
-                                showMsg("网络异常，请检查网络");
-                            }
-                        }
 
-                        @Override
-                        public void onError() {
-                            close();
-                            showMsg("网络异常，请检查网络");
-                        }
-                    });
                 }
 
             }
@@ -209,15 +195,21 @@ public class LiveFragment extends Fragment {
     }
 
     private void startReceive() throws Exception {
+
+
         isRunning = true;
         initDecoder();
-        if (rtp_socket == null) {
 
-            SipdroidSocket sSocket = new SipdroidSocket(Data.Local_UDP_PORT);
-            sSocket.setSoTimeout(7000);
-            rtp_socket = new RtpSocket(sSocket);
-            rtp_packet = new RtpPacket(socketBuffer, 0);
-        }
+        SipdroidSocket sSocket = new SipdroidSocket(0);
+        sSocket.setSoTimeout(7000);
+        sSocket.send(mPacket);   //发送个包给视频源（监控器or服务器），让对方找到你
+        sSocket.send(mPacket);   //防止丢包多发一个
+        sSocket.receive(mPacket);
+        Data.MONITOR_IP = mPacket.getAddress();   //或者对方ip，在局域网内播放时，心跳包需要该ip
+
+        rtp_socket = new RtpSocket(sSocket);
+        rtp_packet = new RtpPacket(socketBuffer, 0);
+
 
         startDecoder();
     }
@@ -249,7 +241,7 @@ public class LiveFragment extends Fragment {
         boolean hasStartPacket, hasEndPacket, isContinue, isRightGet;
         int lastSequence, nowSequence, frmSize;
 
-        mTimer = new HBTimer(new HBTask(LiveFrom.Monitor));
+        mTimer = new HBTimer(new HBTask(mLiveFrom));
         mTimer.schedule(5000);
 
         while (isRunning) {
@@ -385,9 +377,10 @@ public class LiveFragment extends Fragment {
         return true;
     }
 
-    //释放播放视频时启动的相关资源
-    private void release() {
 
+    private void close() {
+        Log.e(TAG, "close");
+        isRunning = false;
 
         try {                   //实践证明，mCodec.release(),rtp_socket.close()很容易抛出异常
             Thread.sleep(60);   //让正在播放的视频完全播放完
@@ -409,50 +402,50 @@ public class LiveFragment extends Fragment {
             Log.e(TAG, "mTimer cancel");
         }
 
-    }
-
-    private void close() {
-        Log.e(TAG, "close");
-        isRunning = false;
-
         if (mActivity != null) {
             mActivity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    mPlay.setText("实时播放");
+                    mPlay.setText("实时监控");
                     mSurfaceView.setVisibility(View.INVISIBLE);
                 }
             });
         }
 
-        release();
+
 
     }
 
     //得到当前帐号对应的监控器所连接的路由器的mac地址
-    private void ask_BSSID(){
-        if (Data.BSSID == null || Data.BSSID.equals("")){
-            String msg = Data.ASK_BSSID + " " + Data.account + " " + Tools.pwdToMd5(Data.password);
-            new TcpTool(Data.SERVER_IP,Data.SERVER_PORT1).connect(msg, new RequestCallBack() {
-                @Override
-                public void onFinish(String response) {
-                    if (response.length() > 16){
-                        Data.BSSID = response.trim();
-                        Log.e("ask bssid",Data.BSSID);
-                        //储存帐号密码
-                        SharedPreferences preferences = MyApplication.getContext().getSharedPreferences("properties", MODE_PRIVATE);
-                        SharedPreferences.Editor editor = preferences.edit();
-                        editor.putString("bssid", Data.BSSID);
-                        editor.commit();
+    private void ask_BSSID() {
+
+        String msg = Data.ASK_BSSID + " " + Data.account + " " + Tools.pwdToMd5(Data.password);
+        new TcpTool(Data.SERVER_IP, Data.SERVER_PORT1).connect(msg, new RequestCallBack() {
+            @Override
+            public void onFinish(String response) {
+                if (response.length() > 16) {
+                    String bssid = response.trim();
+
+                    //如果当前app储存的bssid与服务器一致，无需操作
+                    if (Data.BSSID != null && Data.BSSID.equals(bssid)){
+                        return;
                     }
-                }
 
-                @Override
-                public void onError() {
-
+                    //储存帐号密码
+                    Data.BSSID = bssid;
+                    SharedPreferences preferences = MyApplication.getContext().getSharedPreferences("properties", MODE_PRIVATE);
+                    SharedPreferences.Editor editor = preferences.edit();
+                    editor.putString("bssid", Data.BSSID);
+                    editor.commit();
                 }
-            });
-        }
+            }
+
+            @Override
+            public void onError() {
+
+            }
+        });
+
     }
 
     private void showMsg(final String msg) {
@@ -465,7 +458,6 @@ public class LiveFragment extends Fragment {
             });
         }
     }
-
 
     @Override
     public void onAttach(Context context) {
@@ -492,6 +484,8 @@ public class LiveFragment extends Fragment {
         super.onDetach();
         mActivity = null;
     }
+
+
 
 }
 

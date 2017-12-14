@@ -31,8 +31,6 @@ public class Data {
     public final static int MONITOR_PORT1 = 8894;   //监控器端口，用于发送广播
     public final static int MONITOR_PORT2 = 8890;   //监控器端口，用于传输wifi帐号密码
 
-    public transient static int Local_UDP_PORT = 20000; //本地接受视频数据的UDP端口
-
     private static final String DL_PATH = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "monitor" +
             File.separator;
     public static final String DL_VIDEO_PATH = DL_PATH + "video" + File.separator;

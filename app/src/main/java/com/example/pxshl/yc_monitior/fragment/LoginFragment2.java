@@ -83,17 +83,17 @@ public class LoginFragment2 extends Fragment {
 
         final Button bind_phone = (Button) view.findViewById(R.id.bind_phone);
         //如果已绑定手机号码
-        if (!Data.phone_num.equals("")) {
+        if (Data.phone_num != null && !Data.phone_num.equals("")) {
             bind_phone.setText("已绑定手机： " + Data.phone_num);
-            bind_phone.setEnabled(false);
-        } else {
-            bind_phone.setOnClickListener(new View.OnClickListener() {
+        }
+
+        bind_phone.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     bind_phone();
                 }
             });
-        }
+
 
 
         return view;
@@ -229,7 +229,7 @@ public class LoginFragment2 extends Fragment {
             @Override
             public void onFinish() {
                 send.setText("发送验证码");
-                send.setFocusable(true);
+                send.setEnabled(true);
             }
         };
 
@@ -242,7 +242,7 @@ public class LoginFragment2 extends Fragment {
                 } else {
 
                     new TcpTool(Data.SERVER_IP, Data.SERVER_PORT2).connect(Data.SEND_PHONE + " " + Data.account + " " + Tools.pwdToMd5(Data.password) + " " + phone_number, null);
-                    send.setFocusable(false);
+                    send.setEnabled(false);
                     timer.start();
                 }
             }
@@ -281,6 +281,13 @@ public class LoginFragment2 extends Fragment {
                                     showMsg("验证成功");
 
                                     timer.cancel();
+                                    Data.phone_num = phone_number;
+                                    //储存手机号码到本地
+                                    SharedPreferences preferences = MyApplication.getContext().getSharedPreferences("properties", MODE_PRIVATE);
+                                    SharedPreferences.Editor editor = preferences.edit();
+                                    editor.putString("phone_num", phone_number);
+                                    editor.commit();
+
                                     if (mActivity != null) {
                                         mActivity.runOnUiThread(new Runnable() {
                                             @Override

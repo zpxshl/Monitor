@@ -1,6 +1,7 @@
 package com.example.pxshl.yc_monitior.fragment;
 
 import android.app.Activity;
+import android.app.Dialog;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -13,6 +14,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ExpandableListView;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.example.pxshl.yc_monitior.R;
@@ -33,6 +35,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -50,18 +53,18 @@ public class AlarmFragment extends Fragment {
     private View mView;
 
     private AlarmELVAdapter mAdapter;    //适配器
-    private List<String> groupsList = new ArrayList<>(); //一级列表
+    private List<String> groupsList = new LinkedList<>(); //一级列表
     private Map<Integer, List<AlarmInfo>> childMap = new HashMap<>(); //二级列表
 
 
     //通过mData判断子项信息是否加载完
     private List<List<String>> mData = new ArrayList<>();//代会再补充注释
 
-
+    private List<Boolean> isNoData = new ArrayList<>(); //某一天下没有报警照片
     private AtomicBoolean[] isLoadings; //线程安全 可修改为退出应用也将其改为false
-
+    private volatile boolean isLoadGroupMsg;
+    private static BitmapFactory.Options m0ptions = new BitmapFactory.Options();
     private static LoadBitmap mLoad;
-
 
 
     @Override
@@ -88,11 +91,11 @@ public class AlarmFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
+        m0ptions.inPreferredConfig = Bitmap.Config.RGB_565;  //压缩图片
     }
 
 
 
-    @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
 
@@ -111,7 +114,7 @@ public class AlarmFragment extends Fragment {
         mTextView = (TextView) mView.findViewById(R.id.alarmFrag_empty_tv);
         mSRL = (SwipeRefreshLayout) mView.findViewById(R.id.alarm_frag_srl);
         final ExpandableListView listView = (ExpandableListView) mView.findViewById(R.id.frag_alarm_listView);
-        mAdapter = new AlarmELVAdapter(getContext(),mLoad,mData,groupsList, childMap);
+        mAdapter = new AlarmELVAdapter(getContext(),mLoad,mData,groupsList, childMap,isNoData);
         listView.setAdapter(mAdapter);
         listView.setEmptyView(mTextView);
         loadGroupsInfo();
@@ -154,8 +157,9 @@ public class AlarmFragment extends Fragment {
             @Override
             public void onRefresh() {
 
-                if (!isLoading()) {
+                if (!isLoading() && isLoadGroupMsg) {
 
+                    mData.clear();
                     groupsList.clear();         //刷新，先清除现有数据
                     childMap.clear();
                     System.gc();
@@ -184,11 +188,13 @@ public class AlarmFragment extends Fragment {
             }
         }
 
-
         return false;
     }
 
     private void loadGroupsInfo() {
+
+        isLoadGroupMsg = true;
+        isNoData.clear();
 
         new TcpTool(Data.SERVER_IP, Data.SERVER_PORT1).connect(Data.ALARM + " " + Data.account + " " + Tools.pwdToMd5(Data.password), new RequestCallBack() {
             @Override
@@ -215,8 +221,10 @@ public class AlarmFragment extends Fragment {
                         childMap.put(i, new ArrayList<AlarmInfo>());
                         isLoadings[i] = new AtomicBoolean(false);
                         mData.add(new ArrayList<String>());
+                        isNoData.add(false);
                     }
 
+                    isLoadGroupMsg = false;
 
                     if (mActivity != null) {
                         mActivity.runOnUiThread(new Runnable() {
@@ -227,16 +235,13 @@ public class AlarmFragment extends Fragment {
                             }
                         });
                     }
-
-
                 }
-
-
             }
 
             @Override
             public void onError() {
                 showMsg("连接服务器失败，请检查网络连接~");
+                isLoadGroupMsg = false;
 
             }
         });
@@ -255,14 +260,19 @@ public class AlarmFragment extends Fragment {
             public void onFinish(final String response) {
 
                 if (response.equals("")){
+
+                    isNoData.remove(groupPosition);
+                    isNoData.add(groupPosition,true);
+                    notifyUI();
                     return;
                 }
+
 
                 String[] datas = response.split(" ");
                 for (String data : datas) {
                     mData.get(groupPosition).add(data);
                 }
-
+                notifyUI();
 
                 //先加载10张照片
                 String date = groupsList.get(groupPosition);
@@ -283,6 +293,7 @@ public class AlarmFragment extends Fragment {
     }
 
     private void showMsg(final String msg) {
+
         if (mActivity != null) {
             mActivity.runOnUiThread(new Runnable() {
                 @Override
@@ -309,7 +320,7 @@ public class AlarmFragment extends Fragment {
                 isLoadings[groupPosition].set(true);
 
                 for (String datum : data){
-                    //当用户折叠所在标签时，isLoadings[groupPosition].get()为false，停止线程加载
+                    //当用户折叠所在标签时，isLoadings[groupPosition].get()为false，停止加载
                     if (!isLoadings[groupPosition].get()) {
                         break;
                     }
@@ -348,10 +359,8 @@ public class AlarmFragment extends Fragment {
 
     private Bitmap loadBitmap(String msg) {
 
-        //可优化，不必要每次都new 可设置为静态，在onCreate中new
+
         Bitmap bmp = null;
-        BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inPreferredConfig = Bitmap.Config.ARGB_8888;  //压缩图片 防止内存
 
         try (Socket socket = new Socket(Data.SERVER_IP, Data.SERVER_PORT1)) {
             OutputStream os;
@@ -360,7 +369,7 @@ public class AlarmFragment extends Fragment {
             os.write(msg.getBytes());
             os.flush();
 
-            bmp = BitmapFactory.decodeStream(socket.getInputStream(), null, options);
+            bmp = BitmapFactory.decodeStream(socket.getInputStream(), null, m0ptions);
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -383,5 +392,17 @@ public class AlarmFragment extends Fragment {
             }
         }
     }
+
+    private void notifyUI(){
+        if (mActivity != null){
+            mActivity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    mAdapter.notifyDataSetChanged();
+                }
+            });
+        }
+    }
+
 
 }

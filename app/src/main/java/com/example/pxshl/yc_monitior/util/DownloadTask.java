@@ -67,7 +67,7 @@ public class DownloadTask extends Thread {
 
             while ((len = in.read(in_buff)) != -1) {
                 if (isCancel) {
-                    downloadFail();
+                    downloadCancel();
                     return;
                 }
 
@@ -108,6 +108,22 @@ public class DownloadTask extends Thread {
                 e.printStackTrace();
             }
         }
+    }
+
+    private void downloadCancel(){
+        File file = new File(Data.DL_VIDEO_PATH, mFileInfo.getFileName());
+        if (file.exists()) {
+            file.delete();
+        }
+
+        mFileInfo.setFinish(false);
+        mFileInfo.setDownloading(false);
+        mFileInfo.setFinished(0);
+        mFileInfo.setLength(0);
+
+        Intent intent = new Intent(DownloadService.UPDATE);
+        intent.putExtra("fileInfo", mFileInfo);
+        LocalBroadcastManager.getInstance(MyApplication.getContext()).sendBroadcast(intent);
     }
 
 
