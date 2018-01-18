@@ -240,6 +240,7 @@ public class AlarmFragment extends Fragment {
 
             @Override
             public void onError() {
+
                 showMsg("连接服务器失败，请检查网络连接~");
                 isLoadGroupMsg = false;
 

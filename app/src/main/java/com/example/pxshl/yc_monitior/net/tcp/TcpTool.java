@@ -62,6 +62,7 @@ public class TcpTool {
 
                 }
                 catch (IOException e) {
+                    e.printStackTrace();
                     if (requestCallBack != null){
                         requestCallBack.onError();
                     }

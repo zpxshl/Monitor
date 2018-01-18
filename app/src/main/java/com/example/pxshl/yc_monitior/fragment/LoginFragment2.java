@@ -119,6 +119,7 @@ public class LoginFragment2 extends Fragment {
         Data.isLogin = false;
         Data.account = "";
         Data.password = "";
+        Data.phone_num = "";
 
         Toast.makeText(MyApplication.getContext(), "登出成功", Toast.LENGTH_SHORT).show();
         ((LoginActivity) getActivity()).changeFragment();
@@ -177,6 +178,7 @@ public class LoginFragment2 extends Fragment {
                                             Data.account = "";
                                             Data.password = "";
                                             Data.isLogin = false;
+                                            Data.phone_num = "";
 
                                             if (mActivity != null) {
                                                 mActivity.runOnUiThread(new Runnable() {

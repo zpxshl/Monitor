@@ -99,7 +99,7 @@ public class LoginFragment1 extends Fragment {
                 public void onClick(View v) {
                     Intent intent = new Intent(mActivity
                             , WifiActivity.class);
-                    startActivity(intent);
+                    mActivity.startActivity(intent);
                 }
             });
 
@@ -130,7 +130,7 @@ public class LoginFragment1 extends Fragment {
 
                                 if (response.equals("")) {
                                     showMsg("服务器异常，请稍后重试");
-                                } else if (response.contains("no")) {
+                                } else if (response.equals("no")) {
                                     showMsg("帐号不存在");
                                 } else if (response.contains("true")) {
 
@@ -138,12 +138,11 @@ public class LoginFragment1 extends Fragment {
 
                                     try {  //防止服务器抽风，不按规定格式返回数据，加try catch
 
-                                        Long phone = Long.decode(responses[2]);
+                                        Long phone = Long.decode(responses[1]);
                                         Log.e("LoginF", phone + " ");
-                                        if (phone != -1 && responses[2].length() > 10) {
-                                            Data.phone_num = responses[2];
+                                        if (phone != -1 && responses[1].length() == 11) {
+                                            Data.phone_num = responses[1];
                                         }
-
                                     } catch (Exception e) {
                                         e.printStackTrace();
                                     }
@@ -160,7 +159,6 @@ public class LoginFragment1 extends Fragment {
                                         editor.putString("account", account);
                                         editor.putString("password", password);
                                         editor.putBoolean("isLogin", true);
-                                        //      editor.putInt("alarm_sensitivity",Data.alarm_sensitivity);
                                         editor.putString("phone_num", Data.phone_num);
                                         editor.commit();
                                     }

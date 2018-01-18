@@ -1,7 +1,9 @@
 package com.example.pxshl.yc_monitior.fragment;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.media.MediaCodec;
 import android.media.MediaFormat;
@@ -95,7 +97,18 @@ public class LiveFragment extends Fragment {
                         return;
                     }
 
-                    live();
+                    if (Tools.isWifi(MyApplication.getContext())){
+                        live();
+                    }else {
+                       new  AlertDialog.Builder(mActivity).setMessage("当前非WIFI网络,是否继续播放").setTitle("警告")
+                               .setPositiveButton("继续播放", new DialogInterface.OnClickListener() {
+                                   @Override
+                                   public void onClick(DialogInterface dialog, int which) {
+                                      live();
+                                   }
+                               }).setNegativeButton("取消",null).show();
+                    }
+
                 } else {
                     mCurrentTime = System.currentTimeMillis();
                     String msg = Data.STOP_PLAY + " " + Data.account + " " + Tools.pwdToMd5(Data.password);
